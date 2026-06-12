@@ -2,50 +2,49 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Yoga V4 - Fiche Posture</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yoga Pro - Session</title>
     <style>
         body { font-family: sans-serif; background: #121214; color: #fff; padding: 20px; }
-        .card { background: #1e1e22; padding: 20px; border-radius: 15px; border: 2px solid #333; }
+        .card { background: #1e1e22; padding: 20px; border-radius: 15px; }
         input, select { width: 100%; padding: 12px; margin: 8px 0; border-radius: 5px; border: 1px solid #444; background: #2a2a30; color: #fff; }
-        button { width: 100%; padding: 18px; background: #e91e63; color: white; border: none; border-radius: 10px; margin-top: 15px; font-weight: bold; }
+        button { width: 100%; padding: 18px; background: #e91e63; color: white; border: none; border-radius: 10px; margin-top: 15px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
     <div class="card">
-        <h2>Créer une posture</h2>
-        
-        <label>Nom de la posture :</label>
-        <input type="text" id="postureNom" placeholder="Ex: Pigeon">
-        
-        <label>Nom de l'image (ex: pigeon.jpg) :</label>
-        <input type="text" id="imageNom" placeholder="pigeon.jpg">
-        
-        <label>Temps par côté (secondes) :</label>
-        <select id="tempsSelect" onchange="checkManual()">
-            <option value="15">15s</option>
-            <option value="30" selected>30s</option>
-            <option value="45">45s</option>
-            <option value="60">60s</option>
-            <option value="manual">Manuel...</option>
+        <h2>Gestion des postures</h2>
+        <input type="text" id="postureNom" placeholder="Nom de la posture">
+        <input type="text" id="imageNom" placeholder="Nom de l'image (ex: pigeon.png)">
+        <select id="tempsSelect">
+            <option value="15">15 secondes</option>
+            <option value="30" selected>30 secondes</option>
+            <option value="60">60 secondes</option>
         </select>
-        <input type="number" id="manualTemps" style="display:none;" placeholder="Entrer les secondes">
-        
-        <label><input type="checkbox" id="estDouble"> Posture Double (G-D)</label><br>
-        <label><input type="checkbox" id="miDelai"> Bip mi-délai</label>
-        
-        <label>Temps de préparation (secondes) :</label>
-        <input type="number" id="prepTemps" value="2">
-        
-        <button onclick="savePosture()">Sauvegarder la posture</button>
+        <button onclick="sauvegarder()">Sauvegarder la posture</button>
+        <button onclick="exporterJSON()" style="background:#4caf50;">Exporter mes données</button>
     </div>
 
     <script>
-        function checkManual() {
-            const select = document.getElementById('tempsSelect');
-            document.getElementById('manualTemps').style.display = (select.value === 'manual') ? 'block' : 'none';
+        function sauvegarder() {
+            let data = {
+                nom: document.getElementById('postureNom').value,
+                img: document.getElementById('imageNom').value,
+                temps: document.getElementById('tempsSelect').value
+            };
+            let liste = JSON.parse(localStorage.getItem('yogaData') || '[]');
+            liste.push(data);
+            localStorage.setItem('yogaData', JSON.stringify(liste));
+            alert('Posture sauvegardée localement !');
         }
-        function savePosture() {
-            alert("Posture sauvegardée ! (Prochaine étape : Export vers fichier JSON)");
+
+        function exporterJSON() {
+            let data = localStorage.getItem('yogaData');
+            let blob = new Blob([data], {type: 'application/json'});
+            let a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'mes_postures.json';
+            a.click();
         }
     </script>
 </body>
