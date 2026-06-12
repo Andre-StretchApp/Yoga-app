@@ -1,51 +1,5 @@
-<!DOCTYPE html>
-<html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Yoga Pro - Session</title>
-    <style>
-        body { font-family: sans-serif; background: #121214; color: #fff; padding: 20px; }
-        .card { background: #1e1e22; padding: 20px; border-radius: 15px; }
-        input, select { width: 100%; padding: 12px; margin: 8px 0; border-radius: 5px; border: 1px solid #444; background: #2a2a30; color: #fff; }
-        button { width: 100%; padding: 18px; background: #e91e63; color: white; border: none; border-radius: 10px; margin-top: 15px; font-weight: bold; cursor: pointer; }
-    </style>
-</head>
-<body>
-    <div class="card">
-        <h2>Gestion des postures</h2>
-        <input type="text" id="postureNom" placeholder="Nom de la posture">
-        <input type="text" id="imageNom" placeholder="Nom de l'image (ex: pigeon.png)">
-        <select id="tempsSelect">
-            <option value="15">15 secondes</option>
-            <option value="30" selected>30 secondes</option>
-            <option value="60">60 secondes</option>
-        </select>
-        <button onclick="sauvegarder()">Sauvegarder la posture</button>
-        <button onclick="exporterJSON()" style="background:#4caf50;">Exporter mes données</button>
-    </div>
-
-    <script>
-        function sauvegarder() {
-            let data = {
-                nom: document.getElementById('postureNom').value,
-                img: document.getElementById('imageNom').value,
-                temps: document.getElementById('tempsSelect').value
-            };
-            let liste = JSON.parse(localStorage.getItem('yogaData') || '[]');
-            liste.push(data);
-            localStorage.setItem('yogaData', JSON.stringify(liste));
-            alert('Posture sauvegardée localement !');
-        }
-
-        function exporterJSON() {
-            let data = localStorage.getItem('yogaData');
-            let blob = new Blob([data], {type: 'application/json'});
-            let a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = 'mes_postures.json';
-            a.click();
-        }
-    </script>
-</body>
-</html>
+    ...
