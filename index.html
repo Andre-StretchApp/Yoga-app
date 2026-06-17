@@ -536,12 +536,16 @@
       </div>
     </section>
 
-    <section id="view-builder" class="app-view hidden">
+	<section id="view-builder" class="app-view hidden">
       <h2>Create Posture</h2>
+      
+      <label style="font-size:14px; color:var(--text-muted);">Image File Name (Click to select from phone)</label>
+      <input type="text" id="posture-image" placeholder="Click to select an image..." onclick="triggerLocalFileSelector()" readonly>
+      <input type="file" id="hidden-posture-file-input" class="hidden" accept="image/*" onchange="handleLocalFileSelection(event)">
+
       <label style="font-size:14px; color:var(--text-muted);">Posture Name</label>
-      <input type="text" id="posture-name" placeholder="e.g., Pigeon Pose">
-      <label style="font-size:14px; color:var(--text-muted);">Image File Name</label>
-      <input type="text" id="posture-image" placeholder="e.g., pigeon.jpg">
+      <input type="text" id="posture-name" placeholder="Will be filled automatically">
+      
       <label style="font-size:14px; color:var(--text-muted);">Duration Per Side (seconds)</label>
       <input type="number" id="posture-duration" value="45" min="5">
       <div class="checkbox-group">
@@ -550,6 +554,7 @@
       </div>
       <label style="font-size:14px; color:var(--text-muted);">Extra Preparation Delay (seconds)</label>
       <input type="number" id="posture-prep" value="0" min="0">
+      
       <div class="form-actions">
         <button class="btn-wf-cancel" style="padding:14px;" onclick="closeBuilderView()">[Cancel]</button>
         <button class="btn-save-catalog" onclick="savePostureToCatalog()">[Save to Catalog]</button>
@@ -869,6 +874,23 @@
       closeBuilderView();
     }
 
+	function triggerLocalFileSelector() {
+	  document.getElementById('hidden-posture-file-input').click();
+	}
+
+	function handleLocalFileSelection(event) {
+	  const file = event.target.files[0];
+	  if (!file) return;
+
+	  const fullFileName = file.name;
+	  document.getElementById('posture-image').value = fullFileName;
+
+	  const fileNameWithoutExtension = fullFileName.substring(0, fullFileName.lastIndexOf('.')) || fullFileName;
+	  document.getElementById('posture-name').value = fileNameWithoutExtension;
+  
+	  event.target.value = '';
+	}
+
     function renderStep2List() {
       const container = document.getElementById('config-lengths-list'); container.innerHTML = '';
       wizardRoutineData.postures.forEach((posture, idx) => {
@@ -1058,7 +1080,7 @@
           }
           let volumeMoyen = volumeTotal / bufferLength;
 
-          if (volumeMoyen > 65) { 
+          if (volumeMoyen > 45) { 
             stopMicListening();
             transitionToActiveTimerState2();
             return;
