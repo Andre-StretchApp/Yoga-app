@@ -668,31 +668,51 @@
       setupNativeSpeechRecognition();
     });
 
-      function loadDataFromStorage() {
-      const stored = localStorage.getItem('yogaData');
-      if (stored) {
-        try {
-          let parsed = JSON.parse(stored);
-          
-          // Système d'auto-guérison : Vérifie si la structure correspond au schéma v4
-          if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
-            console.warn("Ancien format détecté. Restauration de la structure v4.");
-            parsed = { globalCatalog: [...DEFAULT_CATALOG], routines: [...DEFAULT_ROUTINES] };
-          } else {
-            // Complète les données manquantes si nécessaire
-            if (!parsed.globalCatalog) parsed.globalCatalog = [...DEFAULT_CATALOG];
-            if (!parsed.routines) parsed.routines = [...DEFAULT_ROUTINES];
-          }
-          
-          appData = parsed;
-        } catch(e) {
-          console.error("Stockage corrompu, réinitialisation des modèles", e);
+          /* --- CORE LIFE-CYCLE ENGINE AND PERSISTENCE --- */
+    window.addEventListener('DOMContentLoaded', () => {
+      try {
+        loadDataFromStorage();
+        renderHomeView();
+        setupNativeSpeechRecognition();
+      } catch(error) {
+        // En cas de crash, on affiche l'erreur directement sur l'écran du téléphone
+        document.getElementById('routines-list').innerHTML = `
+          <div style="background-color: var(--accent-danger); color: white; padding: 15px; border-radius: 8px; font-size: 14px;">
+            <b>ERREUR CRITIQUE :</b><br>${error.message}
+          </div>`;
+      }
+    });
+
+    function loadDataFromStorage() {
+      try {
+        const stored = localStorage.getItem('yogaData');
+        if (stored) {
+          appData = JSON.parse(stored);
+        } else {
           resetToSeedData();
         }
-      } else {
-        resetToSeedData();
+      } catch(e) {
+        // Si le navigateur bloque le localStorage, on charge les données en mémoire vive
+        console.warn("Accès au stockage local bloqué par le navigateur.");
+        appData.globalCatalog = [...DEFAULT_CATALOG];
+        appData.routines = [...DEFAULT_ROUTINES];
       }
     }
+
+    function resetToSeedData() {
+      appData.globalCatalog = [...DEFAULT_CATALOG];
+      appData.routines = [...DEFAULT_ROUTINES];
+      commitToStorage();
+    }
+
+    function commitToStorage() {
+      try {
+        localStorage.setItem('yogaData', JSON.stringify(appData));
+      } catch(e) {
+        console.warn("Impossible de sauvegarder : stockage bloqué.");
+      }
+    }
+
 
 
     function resetToSeedData() {
