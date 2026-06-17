@@ -925,17 +925,115 @@
     }
 
     /* --- VUE D: AUDIO PLAYBACK ENGINE (ANTI-BUG WRAPPED) --- */
-	function startRoutinePlayback(routineId) {
+function startRoutinePlayback(routineId) {
          activeRoutine = appData.routines.find(r => r.id === routineId);
          if(!activeRoutine) return;
-         
-         // Activation unique au démarrage : le son système ne devrait jouer qu'une fois ici
-         if(speechRecognitionEngine && !isSpeechEngineRunning) {
-           try { speechRecognitionEngine.start(); isSpeechEngineRunning = true; } catch(e) {}
-         }
-   
+
+         // Le micro s'ouvre une seule fois ici et reste actif (point vert fixe)
+         // jusqu'à la sortie de la routine. Voir ensureMicStreamOpen().
+         ensureMicStreamOpen();
          activeStepIdx = 0; activeSide = 'left'; showView('view-player'); executeGlobalInitialCountdown();
        }
+
+    // --- GESTION CENTRALISÉE DU MICRO ---
+    // Approche principale : on ouvre UN SEUL flux micro persistant (getUserMedia) pour
+    // toute la durée de la routine. Ce flux reste ouvert en continu (point vert fixe,
+    // pas de bip) et on surveille juste le volume (VAD = Voice Activity Detection).
+    // Quand l'utilisateur commence vraiment à parler ET qu'on attend une commande
+    // (état 1), on déclenche alors une courte capture de reconnaissance vocale.
+    //
+    // Repli automatique : si getUserMedia échoue (permission refusée, contexte non
+    // sécurisé, etc.), on retombe sur l'ancien comportement (continuous=true géré par
+    // l'état) pour ne jamais bloquer l'app.
+
+    let micStream = null;
+    let audioCtx = null;
+    let analyserNode = null;
+    let vadRafId = null;
+    let vadSpeaking = false;
+    let vadModeActive = false;
+    const VAD_THRESHOLD = 0.025;
+
+    async function ensureMicStreamOpen() {
+      if (micStream || vadModeActive) return;
+      try {
+        micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        vadModeActive = true;
+        setupVoiceActivityDetection();
+      } catch (e) {
+        console.warn("Flux micro persistant indisponible, repli sur l'ancien comportement :", e);
+        vadModeActive = false;
+        ensureMicListeningLegacy();
+      }
+    }
+
+    function ensureMicStreamClosed() {
+      if (vadRafId) { cancelAnimationFrame(vadRafId); vadRafId = null; }
+      if (audioCtx) { try { audioCtx.close(); } catch(e) {} audioCtx = null; }
+      analyserNode = null;
+      if (micStream) { micStream.getTracks().forEach(t => t.stop()); micStream = null; }
+      vadModeActive = false;
+      vadSpeaking = false;
+      stopSpeechBurst();
+    }
+
+    function setupVoiceActivityDetection() {
+      try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        audioCtx = new AudioContext();
+        const source = audioCtx.createMediaStreamSource(micStream);
+        analyserNode = audioCtx.createAnalyser();
+        analyserNode.fftSize = 512;
+        source.connect(analyserNode);
+        const dataArray = new Uint8Array(analyserNode.fftSize);
+
+        const loop = () => {
+          analyserNode.getByteTimeDomainData(dataArray);
+          let sumSquares = 0;
+          for (let i = 0; i < dataArray.length; i++) {
+            const v = (dataArray[i] - 128) / 128;
+            sumSquares += v * v;
+          }
+          const rms = Math.sqrt(sumSquares / dataArray.length);
+
+          if (rms > VAD_THRESHOLD && activeTimerState === 1 && !vadSpeaking && !isSpeechEngineRunning) {
+            vadSpeaking = true;
+            startSpeechBurst();
+          }
+          vadRafId = requestAnimationFrame(loop);
+        };
+        loop();
+      } catch (e) {
+        console.warn("Initialisation VAD échouée :", e);
+        vadModeActive = false;
+        ensureMicListeningLegacy();
+      }
+    }
+
+    // Déclenche une courte capture de reconnaissance vocale (s'arrête seule après
+    // une commande ou un silence bref, voir continuous=false plus bas).
+    function startSpeechBurst() {
+      if (speechRecognitionEngine && !isSpeechEngineRunning) {
+        try { speechRecognitionEngine.start(); isSpeechEngineRunning = true; }
+        catch(e) { vadSpeaking = false; }
+      }
+    }
+
+    function stopSpeechBurst() {
+      if (speechRecognitionEngine && isSpeechEngineRunning) {
+        try { speechRecognitionEngine.stop(); } catch(e) {}
+        isSpeechEngineRunning = false;
+      }
+    }
+
+    // Repli (mode hérité) : utilisé uniquement si le flux micro persistant ne
+    // fonctionne pas sur l'appareil. Reproduit le comportement de la version
+    // précédente : écoute continue, redémarrée uniquement pendant l'état 1.
+    function ensureMicListeningLegacy() {
+      if (speechRecognitionEngine && !isSpeechEngineRunning) {
+        try { speechRecognitionEngine.start(); isSpeechEngineRunning = true; } catch(e) {}
+      }
+    }
 
     function clearActiveAsynchronousMemoryInstances() {
       if (timerIntervalId) { clearInterval(timerIntervalId); timerIntervalId = null; }
@@ -979,11 +1077,13 @@
       document.getElementById('player-status-text').innerText = "Awaiting Vocal Command (Say START or GO)";
       document.getElementById('player-timer-digits').innerText = countdownRemaining;
       document.getElementById('btn-player-toggle').innerText = "▶️";
+      if (!vadModeActive) ensureMicListeningLegacy();
       executeTextToSpeechVocalNotification(p.postureName);
     }
 
     function transitionToActiveTimerState2() {
       clearActiveAsynchronousMemoryInstances(); activeTimerState = 2;
+      stopSpeechBurst();
       document.getElementById('player-status-text').innerText = "Timer Running";
       document.getElementById('btn-player-toggle').innerText = "⏸️";
       let nextNotificationDispatched = false;
@@ -1005,6 +1105,7 @@
 
     function startManualTriggerSequenceWithPrepDelay() {
       clearActiveAsynchronousMemoryInstances(); activeTimerState = 3;
+      stopSpeechBurst();
       let totalPrep = 3 + (activeRoutine.postures[activeStepIdx].prepDelay || 0);
       document.getElementById('player-status-text').innerText = `Preparing (${totalPrep}s)`;
       document.getElementById('player-timer-digits').innerText = totalPrep;
@@ -1028,7 +1129,11 @@
         if (!SpeechRecognition) return;
         
         speechRecognitionEngine = new SpeechRecognition();
-        speechRecognitionEngine.continuous = true; // Reste actif en fond
+        // continuous = false : on capture une seule commande à la fois.
+        // En mode VAD, c'est la détection de volume qui décide QUAND déclencher
+        // cette capture (voir setupVoiceActivityDetection). En mode de repli
+        // (hérité), c'est onend qui relance la capture tant qu'on attend (état 1).
+        speechRecognitionEngine.continuous = false;
         speechRecognitionEngine.interimResults = false;
         speechRecognitionEngine.lang = 'en-US';
         
@@ -1042,13 +1147,22 @@
         
         speechRecognitionEngine.onend = () => { 
           isSpeechEngineRunning = false;
-          // Restart loop automatically ONLY if a routine is currently active
-          if (activeRoutine !== null) { 
+          vadSpeaking = false;
+          // Mode de repli UNIQUEMENT (flux persistant indisponible sur l'appareil) :
+          // on relance la capture tant qu'une routine est active et qu'on attend
+          // une commande (état 1). En mode VAD, c'est la boucle de détection de
+          // volume qui décide, donc on ne fait rien de plus ici.
+          if (!vadModeActive && activeRoutine !== null && activeTimerState === 1) { 
             try { 
               speechRecognitionEngine.start(); 
               isSpeechEngineRunning = true; 
             } catch(e){} 
           } 
+        };
+
+        speechRecognitionEngine.onerror = () => {
+          isSpeechEngineRunning = false;
+          vadSpeaking = false;
         };
       } catch (speechError) {
         console.warn("Speech Recognition interface isolated to prevent browser termination:", speechError);
@@ -1077,7 +1191,7 @@
 
     function playerActionToggle() {
       if (activeTimerState === 1) startManualTriggerSequenceWithPrepDelay();
-      else if (activeTimerState === 2) { clearActiveAsynchronousMemoryInstances(); activeTimerState = 1; document.getElementById('player-status-text').innerText = "Paused - Awaiting Trigger (Say START or GO)"; document.getElementById('btn-player-toggle').innerText = "▶️"; }
+      else if (activeTimerState === 2) { clearActiveAsynchronousMemoryInstances(); activeTimerState = 1; document.getElementById('player-status-text').innerText = "Paused - Awaiting Trigger (Say START or GO)"; document.getElementById('btn-player-toggle').innerText = "▶️"; if (!vadModeActive) ensureMicListeningLegacy(); }
     }
 
     function playerActionNext() {
@@ -1096,13 +1210,7 @@
     function exitPlaybackSession() { 
       clearActiveAsynchronousMemoryInstances(); 
       activeRoutine = null; 
-      
-      // Stop the microphone when quitting
-      if (speechRecognitionEngine && isSpeechEngineRunning) {
-        try { speechRecognitionEngine.stop(); } catch(e){}
-        isSpeechEngineRunning = false;
-      }
-      
+      ensureMicStreamClosed();
       renderHomeView(); 
       showView('view-home'); 
     }
