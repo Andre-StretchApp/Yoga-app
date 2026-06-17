@@ -497,7 +497,7 @@
         <input type="file" id="import-file-input" class="hidden" accept=".json" onchange="importData(event)">
       </div>
 
-      <div class="app-version">v4.2</div>
+      <div class="app-version">v4.2a</div>
     </section>
 
     <section id="view-routine-manager" class="app-view hidden">
@@ -925,17 +925,17 @@
     }
 
     /* --- VUE D: AUDIO PLAYBACK ENGINE (ANTI-BUG WRAPPED) --- */
-    function startRoutinePlayback(routineId) {
-      activeRoutine = appData.routines.find(r => r.id === routineId);
-      if(!activeRoutine || activeRoutine.postures.length === 0) return;
-      
-      // Start microphone globally ONCE per routine session
-      if(speechRecognitionEngine && !isSpeechEngineRunning) {
-        try { speechRecognitionEngine.start(); isSpeechEngineRunning = true; } catch(e) {}
-      }
-
-      activeStepIdx = 0; activeSide = 'left'; showView('view-player'); executeGlobalInitialCountdown();
-    }
+	function startRoutinePlayback(routineId) {
+         activeRoutine = appData.routines.find(r => r.id === routineId);
+         if(!activeRoutine) return;
+         
+         // Activation unique au démarrage : le son système ne devrait jouer qu'une fois ici
+         if(speechRecognitionEngine && !isSpeechEngineRunning) {
+           try { speechRecognitionEngine.start(); isSpeechEngineRunning = true; } catch(e) {}
+         }
+   
+         activeStepIdx = 0; activeSide = 'left'; showView('view-player'); executeGlobalInitialCountdown();
+       }
 
     function clearActiveAsynchronousMemoryInstances() {
       if (timerIntervalId) { clearInterval(timerIntervalId); timerIntervalId = null; }
@@ -1022,19 +1022,20 @@
       else { activeSide = 'left'; activeStepIdx++; loadActivePostureIndexSequence(); }
     }
 
-    function setupNativeSpeechRecognition() {
+	function setupNativeSpeechRecognition() {
       try {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (!SpeechRecognition) return;
+        
         speechRecognitionEngine = new SpeechRecognition();
-        speechRecognitionEngine.continuous = true; 
-        speechRecognitionEngine.interimResults = false; 
+        speechRecognitionEngine.continuous = true; // Reste actif en fond
+        speechRecognitionEngine.interimResults = false;
         speechRecognitionEngine.lang = 'en-US';
         
         speechRecognitionEngine.onresult = (event) => {
-          if (activeTimerState !== 1) return; // Only process voice if we are awaiting command
           const speechToken = event.results[event.results.length - 1][0].transcript.trim().toUpperCase();
-          if (speechToken.includes("START") || speechToken.includes("GO")) { 
+          // On ne déclenche l'action START/GO que si on est en attente
+          if (activeTimerState === 1 && (speechToken.includes("START") || speechToken.includes("GO"))) { 
             transitionToActiveTimerState2(); 
           }
         };
