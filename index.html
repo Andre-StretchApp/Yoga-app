@@ -488,8 +488,7 @@
       <h1>Routines</h1>
       <button class="btn-create-routine" onclick="initCreateRoutineWorkflow()">Create a routine</button>
       
-      <div id="routines-list">
-        </div>
+      <div id="routines-list"></div>
 
       <div class="backup-zone">
         <button class="btn-backup" onclick="exportData()">Export Catalog</button>
@@ -614,8 +613,6 @@
     let countdownRemaining = 0;
     let timerIntervalId = null;
     let countdownTimeoutId = null;
-    let speechRecognitionEngine = null;
-    let isSpeechEngineRunning = false;
 
     window.addEventListener('DOMContentLoaded', () => {
       loadDataFromStorage();
@@ -865,7 +862,7 @@
         id: 'posture-' + Date.now(), postureName: name, imageName: img,
         durationPerSide: isNaN(duration) ? 45 : duration,
         isDouble: document.getElementById('posture-double').checked,
-        halfwayBeep: false, // Default false, configured per routine in Step 2
+        halfwayBeep: false, 
         prepDelay: parseInt(document.getElementById('posture-prep').value) || 0
       });
       commitToStorage(); document.getElementById('posture-name').value = ''; document.getElementById('posture-image').value = '';
@@ -924,121 +921,17 @@
       el.addEventListener('dragend', () => el.style.opacity = '1');
     }
 
-    /* --- VUE D: AUDIO PLAYBACK ENGINE (ANTI-BUG WRAPPED) --- */
-function startRoutinePlayback(routineId) {
-         activeRoutine = appData.routines.find(r => r.id === routineId);
-         if(!activeRoutine) return;
-
-         // Le micro s'ouvre une seule fois ici et reste actif (point vert fixe)
-         // jusqu'à la sortie de la routine. Voir ensureMicStreamOpen().
-         ensureMicStreamOpen();
-         activeStepIdx = 0; activeSide = 'left'; showView('view-player'); executeGlobalInitialCountdown();
-       }
-
-    // --- GESTION CENTRALISÉE DU MICRO ---
-    // Approche principale : on ouvre UN SEUL flux micro persistant (getUserMedia) pour
-    // toute la durée de la routine. Ce flux reste ouvert en continu (point vert fixe,
-    // pas de bip) et on surveille juste le volume (VAD = Voice Activity Detection).
-    // Quand l'utilisateur commence vraiment à parler ET qu'on attend une commande
-    // (état 1), on déclenche alors une courte capture de reconnaissance vocale.
-    //
-    // Repli automatique : si getUserMedia échoue (permission refusée, contexte non
-    // sécurisé, etc.), on retombe sur l'ancien comportement (continuous=true géré par
-    // l'état) pour ne jamais bloquer l'app.
-
-    let micStream = null;
-    let audioCtx = null;
-    let analyserNode = null;
-    let vadRafId = null;
-    let vadSpeaking = false;
-    let vadModeActive = false;
-    const VAD_THRESHOLD = 0.025;
-
-    async function ensureMicStreamOpen() {
-      if (micStream || vadModeActive) return;
-      try {
-        micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        vadModeActive = true;
-        setupVoiceActivityDetection();
-      } catch (e) {
-        console.warn("Flux micro persistant indisponible, repli sur l'ancien comportement :", e);
-        vadModeActive = false;
-        ensureMicListeningLegacy();
-      }
-    }
-
-    function ensureMicStreamClosed() {
-      if (vadRafId) { cancelAnimationFrame(vadRafId); vadRafId = null; }
-      if (audioCtx) { try { audioCtx.close(); } catch(e) {} audioCtx = null; }
-      analyserNode = null;
-      if (micStream) { micStream.getTracks().forEach(t => t.stop()); micStream = null; }
-      vadModeActive = false;
-      vadSpeaking = false;
-      stopSpeechBurst();
-    }
-
-    function setupVoiceActivityDetection() {
-      try {
-        const AudioContext = window.AudioContext || window.webkitAudioContext;
-        audioCtx = new AudioContext();
-        const source = audioCtx.createMediaStreamSource(micStream);
-        analyserNode = audioCtx.createAnalyser();
-        analyserNode.fftSize = 512;
-        source.connect(analyserNode);
-        const dataArray = new Uint8Array(analyserNode.fftSize);
-
-        const loop = () => {
-          analyserNode.getByteTimeDomainData(dataArray);
-          let sumSquares = 0;
-          for (let i = 0; i < dataArray.length; i++) {
-            const v = (dataArray[i] - 128) / 128;
-            sumSquares += v * v;
-          }
-          const rms = Math.sqrt(sumSquares / dataArray.length);
-
-          if (rms > VAD_THRESHOLD && activeTimerState === 1 && !vadSpeaking && !isSpeechEngineRunning) {
-            vadSpeaking = true;
-            startSpeechBurst();
-          }
-          vadRafId = requestAnimationFrame(loop);
-        };
-        loop();
-      } catch (e) {
-        console.warn("Initialisation VAD échouée :", e);
-        vadModeActive = false;
-        ensureMicListeningLegacy();
-      }
-    }
-
-    // Déclenche une courte capture de reconnaissance vocale (s'arrête seule après
-    // une commande ou un silence bref, voir continuous=false plus bas).
-    function startSpeechBurst() {
-      if (speechRecognitionEngine && !isSpeechEngineRunning) {
-        try { speechRecognitionEngine.start(); isSpeechEngineRunning = true; }
-        catch(e) { vadSpeaking = false; }
-      }
-    }
-
-    function stopSpeechBurst() {
-      if (speechRecognitionEngine && isSpeechEngineRunning) {
-        try { speechRecognitionEngine.stop(); } catch(e) {}
-        isSpeechEngineRunning = false;
-      }
-    }
-
-    // Repli (mode hérité) : utilisé uniquement si le flux micro persistant ne
-    // fonctionne pas sur l'appareil. Reproduit le comportement de la version
-    // précédente : écoute continue, redémarrée uniquement pendant l'état 1.
-    function ensureMicListeningLegacy() {
-      if (speechRecognitionEngine && !isSpeechEngineRunning) {
-        try { speechRecognitionEngine.start(); isSpeechEngineRunning = true; } catch(e) {}
-      }
+    /* --- VUE D: AUDIO PLAYBACK ENGINE --- */
+    function startRoutinePlayback(routineId) {
+      activeRoutine = appData.routines.find(r => r.id === routineId);
+      if(!activeRoutine) return;
+      startMicListening();
+      activeStepIdx = 0; activeSide = 'left'; showView('view-player'); executeGlobalInitialCountdown();
     }
 
     function clearActiveAsynchronousMemoryInstances() {
       if (timerIntervalId) { clearInterval(timerIntervalId); timerIntervalId = null; }
       if (countdownTimeoutId) { clearTimeout(countdownTimeoutId); countdownTimeoutId = null; }
-      // The microphone is deliberately NOT stopped here to allow the continuous loop
       if (window.speechSynthesis) window.speechSynthesis.cancel();
     }
 
@@ -1077,13 +970,13 @@ function startRoutinePlayback(routineId) {
       document.getElementById('player-status-text').innerText = "Awaiting Vocal Command (Say START or GO)";
       document.getElementById('player-timer-digits').innerText = countdownRemaining;
       document.getElementById('btn-player-toggle').innerText = "▶️";
-      if (!vadModeActive) ensureMicListeningLegacy();
+      startMicListening();
       executeTextToSpeechVocalNotification(p.postureName);
     }
 
     function transitionToActiveTimerState2() {
       clearActiveAsynchronousMemoryInstances(); activeTimerState = 2;
-      stopSpeechBurst();
+      stopMicListening();
       document.getElementById('player-status-text').innerText = "Timer Running";
       document.getElementById('btn-player-toggle').innerText = "⏸️";
       let nextNotificationDispatched = false;
@@ -1105,7 +998,7 @@ function startRoutinePlayback(routineId) {
 
     function startManualTriggerSequenceWithPrepDelay() {
       clearActiveAsynchronousMemoryInstances(); activeTimerState = 3;
-      stopSpeechBurst();
+      stopMicListening();
       let totalPrep = 3 + (activeRoutine.postures[activeStepIdx].prepDelay || 0);
       document.getElementById('player-status-text').innerText = `Preparing (${totalPrep}s)`;
       document.getElementById('player-timer-digits').innerText = totalPrep;
@@ -1123,13 +1016,12 @@ function startRoutinePlayback(routineId) {
       else { activeSide = 'left'; activeStepIdx++; loadActivePostureIndexSequence(); }
     }
 
-/* --- SYSTÈME DE CAPTURE VOCALE LOCALE (ANTI BLIP-BLOUP) --- */
+    /* --- SYSTÈME DE CAPTURE VOCALE LOCALE (ANTI BLIP-BLOUP) --- */
     let audioContextInstance = null;
     let micStreamInstance = null;
     let localAnalyser = null;
 
     async function setupNativeSpeechRecognition() {
-      // Reste vide volontairement car l'initialisation se fait en continu de manière locale
       console.log("Moteur local initialisé (Silencieux)");
     }
 
@@ -1141,7 +1033,6 @@ function startRoutinePlayback(routineId) {
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         if (!AudioContext) return;
 
-        // Accès direct au flux sans passer par les serveurs de Google (Zéro bip)
         micStreamInstance = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
         audioContextInstance = new AudioContext();
         
@@ -1167,7 +1058,6 @@ function startRoutinePlayback(routineId) {
           }
           let volumeMoyen = volumeTotal / bufferLength;
 
-          // Déclenchement sur impulsion vocale ("GO !", "START !")
           if (volumeMoyen > 65) { 
             stopMicListening();
             transitionToActiveTimerState2();
@@ -1196,15 +1086,6 @@ function startRoutinePlayback(routineId) {
       localAnalyser = null;
     }
 
-        speechRecognitionEngine.onerror = () => {
-          isSpeechEngineRunning = false;
-          vadSpeaking = false;
-        };
-      } catch (speechError) {
-        console.warn("Speech Recognition interface isolated to prevent browser termination:", speechError);
-      }
-    }
-
     function executeTextToSpeechVocalNotification(textString) {
       try { if (window.speechSynthesis) { const u = new SpeechSynthesisUtterance(textString); u.lang = 'en-US'; window.speechSynthesis.speak(u); } } catch(e){}
     }
@@ -1216,7 +1097,6 @@ function startRoutinePlayback(routineId) {
         osc.type = 'sine'; 
         osc.frequency.setValueAtTime(freq, ctx.currentTime); 
         
-        // Volume pushed to 0.7 for louder, clearer beeps
         gain.gain.setValueAtTime(0.7, ctx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + dur); 
         
@@ -1227,7 +1107,13 @@ function startRoutinePlayback(routineId) {
 
     function playerActionToggle() {
       if (activeTimerState === 1) startManualTriggerSequenceWithPrepDelay();
-      else if (activeTimerState === 2) { clearActiveAsynchronousMemoryInstances(); activeTimerState = 1; document.getElementById('player-status-text').innerText = "Paused - Awaiting Trigger (Say START or GO)"; document.getElementById('btn-player-toggle').innerText = "▶️"; if (!vadModeActive) ensureMicListeningLegacy(); }
+      else if (activeTimerState === 2) { 
+        clearActiveAsynchronousMemoryInstances(); 
+        activeTimerState = 1; 
+        document.getElementById('player-status-text').innerText = "Paused - Awaiting Trigger (Say START or GO)"; 
+        document.getElementById('btn-player-toggle').innerText = "▶️"; 
+        startMicListening(); 
+      }
     }
 
     function playerActionNext() {
@@ -1246,7 +1132,7 @@ function startRoutinePlayback(routineId) {
     function exitPlaybackSession() { 
       clearActiveAsynchronousMemoryInstances(); 
       activeRoutine = null; 
-      ensureMicStreamClosed();
+      stopMicListening();
       renderHomeView(); 
       showView('view-home'); 
     }
