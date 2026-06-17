@@ -668,19 +668,32 @@
       setupNativeSpeechRecognition();
     });
 
-    function loadDataFromStorage() {
+      function loadDataFromStorage() {
       const stored = localStorage.getItem('yogaData');
       if (stored) {
         try {
-          appData = JSON.parse(stored);
+          let parsed = JSON.parse(stored);
+          
+          // Système d'auto-guérison : Vérifie si la structure correspond au schéma v4
+          if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+            console.warn("Ancien format détecté. Restauration de la structure v4.");
+            parsed = { globalCatalog: [...DEFAULT_CATALOG], routines: [...DEFAULT_ROUTINES] };
+          } else {
+            // Complète les données manquantes si nécessaire
+            if (!parsed.globalCatalog) parsed.globalCatalog = [...DEFAULT_CATALOG];
+            if (!parsed.routines) parsed.routines = [...DEFAULT_ROUTINES];
+          }
+          
+          appData = parsed;
         } catch(e) {
-          console.error("Storage corrupt, resetting data models", e);
+          console.error("Stockage corrompu, réinitialisation des modèles", e);
           resetToSeedData();
         }
       } else {
         resetToSeedData();
       }
     }
+
 
     function resetToSeedData() {
       appData.globalCatalog = [...DEFAULT_CATALOG];
