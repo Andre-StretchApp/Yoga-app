@@ -497,7 +497,7 @@
         <input type="file" id="import-file-input" class="hidden" accept=".json" onchange="importData(event)">
       </div>
 
-      <div class="app-version">v4.2b(Claude)</div>
+      <div class="app-version">v4.3</div>
     </section>
 
     <section id="view-routine-manager" class="app-view hidden">
@@ -1123,42 +1123,78 @@ function startRoutinePlayback(routineId) {
       else { activeSide = 'left'; activeStepIdx++; loadActivePostureIndexSequence(); }
     }
 
-	function setupNativeSpeechRecognition() {
+/* --- SYSTÈME DE CAPTURE VOCALE LOCALE (ANTI BLIP-BLOUP) --- */
+    let audioContextInstance = null;
+    let micStreamInstance = null;
+    let localAnalyser = null;
+
+    async function setupNativeSpeechRecognition() {
+      // Reste vide volontairement car l'initialisation se fait en continu de manière locale
+      console.log("Moteur local initialisé (Silencieux)");
+    }
+
+    async function startMicListening() {
+      if (activeTimerState !== 1) return;
+      if (micStreamInstance) return; 
+
       try {
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SpeechRecognition) return;
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContext) return;
+
+        // Accès direct au flux sans passer par les serveurs de Google (Zéro bip)
+        micStreamInstance = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+        audioContextInstance = new AudioContext();
         
-        speechRecognitionEngine = new SpeechRecognition();
-        // continuous = false : on capture une seule commande à la fois.
-        // En mode VAD, c'est la détection de volume qui décide QUAND déclencher
-        // cette capture (voir setupVoiceActivityDetection). En mode de repli
-        // (hérité), c'est onend qui relance la capture tant qu'on attend (état 1).
-        speechRecognitionEngine.continuous = false;
-        speechRecognitionEngine.interimResults = false;
-        speechRecognitionEngine.lang = 'en-US';
+        const source = audioContextInstance.createMediaStreamSource(micStreamInstance);
+        localAnalyser = audioContextInstance.createAnalyser();
+        localAnalyser.fftSize = 256;
+        source.connect(localAnalyser);
         
-        speechRecognitionEngine.onresult = (event) => {
-          const speechToken = event.results[event.results.length - 1][0].transcript.trim().toUpperCase();
-          // On ne déclenche l'action START/GO que si on est en attente
-          if (activeTimerState === 1 && (speechToken.includes("START") || speechToken.includes("GO"))) { 
-            transitionToActiveTimerState2(); 
+        const bufferLength = localAnalyser.frequencyBinCount;
+        const dataArray = new Uint8Array(bufferLength);
+        
+        const checkAudioLocale = () => {
+          if (activeTimerState !== 1 || !micStreamInstance) {
+            stopMicListening();
+            return;
           }
+          
+          localAnalyser.getByteFrequencyData(dataArray);
+          
+          let volumeTotal = 0;
+          for (let i = 0; i < bufferLength; i++) {
+            volumeTotal += dataArray[i];
+          }
+          let volumeMoyen = volumeTotal / bufferLength;
+
+          // Déclenchement sur impulsion vocale ("GO !", "START !")
+          if (volumeMoyen > 65) { 
+            stopMicListening();
+            transitionToActiveTimerState2();
+            return;
+          }
+          
+          requestAnimationFrame(checkAudioLocale);
         };
         
-        speechRecognitionEngine.onend = () => { 
-          isSpeechEngineRunning = false;
-          vadSpeaking = false;
-          // Mode de repli UNIQUEMENT (flux persistant indisponible sur l'appareil) :
-          // on relance la capture tant qu'une routine est active et qu'on attend
-          // une commande (état 1). En mode VAD, c'est la boucle de détection de
-          // volume qui décide, donc on ne fait rien de plus ici.
-          if (!vadModeActive && activeRoutine !== null && activeTimerState === 1) { 
-            try { 
-              speechRecognitionEngine.start(); 
-              isSpeechEngineRunning = true; 
-            } catch(e){} 
-          } 
-        };
+        requestAnimationFrame(checkAudioLocale);
+        
+      } catch (e) {
+        console.warn("Impossible d'activer le micro local :", e);
+      }
+    }
+
+    function stopMicListening() {
+      if (micStreamInstance) {
+        micStreamInstance.getTracks().forEach(track => track.stop());
+        micStreamInstance = null;
+      }
+      if (audioContextInstance) {
+        try { audioContextInstance.close(); } catch(e){}
+        audioContextInstance = null;
+      }
+      localAnalyser = null;
+    }
 
         speechRecognitionEngine.onerror = () => {
           isSpeechEngineRunning = false;
