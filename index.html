@@ -496,7 +496,7 @@
         <input type="file" id="import-file-input" class="hidden" accept=".json" onchange="importData(event)">
       </div>
 
-      <div class="app-version">v4.5</div>
+      <div class="app-version">v4.6</div>
     </section>
 
     <section id="view-routine-manager" class="app-view hidden">
@@ -806,15 +806,26 @@ function exportData() {
 
     function cancelRoutineWorkflow() { editingRoutineId = null; currentWorkflowStep = 1; renderHomeView(); showView('view-home'); }
 
-function renderStep1Lists() {
+	function renderStep1Lists() {
       const incContainer = document.getElementById('included-stretches-list'); incContainer.innerHTML = '';
       wizardRoutineData.postures.forEach((posture, idx) => {
-        const wrapper = document.createElement('div');
-        wrapper.className = 'swipe-row-wrapper';
-        wrapper.innerHTML = `<div class="swipe-row-bg">Remove</div><div class="swipe-row-fg" data-index="${idx}"><span>${posture.postureName}</span><span>➔</span></div>`;
-        setupSwipeGesturesOnRow(wrapper.querySelector('.swipe-row-fg'), idx);
-        incContainer.appendChild(wrapper);
-      });
+              const wrapper = document.createElement('div');
+              wrapper.className = 'swipe-row-wrapper';
+              
+              // On va chercher l'image de la posture
+              const imgSrc = posture.imageName ? posture.imageName : '';
+              
+              wrapper.innerHTML = `
+                <div class="swipe-row-bg">Remove</div>
+                <div class="swipe-row-fg" data-index="${idx}" style="display: flex; align-items: center; gap: 12px; padding: 10px 16px;">
+                  <img src="${imgSrc}" style="width: 32px; height: 32px; object-fit: cover; border-radius: 4px; background-color: #27272a;" onerror="this.style.visibility='hidden'">
+                  <span style="flex-grow: 1;">${posture.postureName}</span>
+                  <span>➔</span>
+                </div>
+              `;
+              setupSwipeGesturesOnRow(wrapper.querySelector('.swipe-row-fg'), idx);
+              incContainer.appendChild(wrapper);
+            });
 
       const availContainer = document.getElementById('available-stretches-list'); availContainer.innerHTML = '';
       appData.globalCatalog.forEach(posture => {
@@ -940,17 +951,24 @@ function renderStep1Lists() {
 	  event.target.value = '';
 	}
 
-    function renderStep2List() {
+	function renderStep2List() {
       const container = document.getElementById('config-lengths-list'); container.innerHTML = '';
       wizardRoutineData.postures.forEach((posture, idx) => {
         const row = document.createElement('div'); row.className = 'config-row'; row.setAttribute('draggable', 'true'); row.setAttribute('data-index', idx);
         
         const isChecked = posture.halfwayBeep ? 'checked' : '';
         const doubleBadge = posture.isDouble ? '<span class="badge-double">x2</span>' : '';
+        
+        // Définition de l'image de la posture pour l'affichage de la miniature
+        const imgSrc = posture.imageName ? posture.imageName : '';
 
         row.innerHTML = `
           <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 12px;">
-            <div class="config-left"><div class="drag-handle">⋮⋮</div><div>${posture.postureName} ${doubleBadge}</div></div>
+            <div class="config-left" style="display: flex; align-items: center; gap: 12px;">
+              <div class="drag-handle">⋮⋮</div>
+              <img src="${imgSrc}" style="width: 32px; height: 32px; object-fit: cover; border-radius: 4px; background-color: #27272a;" onerror="this.style.visibility='hidden'">
+              <div>${posture.postureName} ${doubleBadge}</div>
+            </div>
             <div class="timer-controls">
               <button class="btn-time-step" onclick="adjustLocalTime(${idx}, -5)">-</button>
               <div class="local-duration-display">${posture.durationPerSide}s</div>
