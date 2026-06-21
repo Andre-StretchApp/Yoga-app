@@ -496,7 +496,7 @@
         <input type="file" id="import-file-input" class="hidden" accept=".json" onchange="importData(event)">
       </div>
 
-      <div class="app-version">v4.3</div>
+      <div class="app-version">v4.4</div>
     </section>
 
     <section id="view-routine-manager" class="app-view hidden">
@@ -683,6 +683,7 @@
           <button class="tile-menu-btn" onclick="toggleTileContextMenu(event, '${routine.id}')">⋮</button>
           <div class="context-menu hidden" id="menu-${routine.id}">
             <button onclick="initEditRoutineWorkflow('${routine.id}')">Edit</button>
+            <button onclick="duplicateRoutine('${routine.id}')">Duplicate</button>
             <button style="color:var(--accent-danger);" onclick="deleteRoutineDirectly('${routine.id}')">Delete</button>
           </div>
         `;
@@ -785,7 +786,7 @@
 
     function cancelRoutineWorkflow() { editingRoutineId = null; currentWorkflowStep = 1; renderHomeView(); showView('view-home'); }
 
-    function renderStep1Lists() {
+function renderStep1Lists() {
       const incContainer = document.getElementById('included-stretches-list'); incContainer.innerHTML = '';
       wizardRoutineData.postures.forEach((posture, idx) => {
         const wrapper = document.createElement('div');
@@ -794,16 +795,44 @@
         setupSwipeGesturesOnRow(wrapper.querySelector('.swipe-row-fg'), idx);
         incContainer.appendChild(wrapper);
       });
+
       const availContainer = document.getElementById('available-stretches-list'); availContainer.innerHTML = '';
       appData.globalCatalog.forEach(posture => {
         const item = document.createElement('div');
         item.className = 'available-posture-item';
-        item.innerHTML = `<span>${posture.postureName}</span><span style="color:var(--accent-primary); font-weight:bold;">+</span>`;
-        item.onclick = () => { wizardRoutineData.postures.push(JSON.parse(JSON.stringify(posture))); renderStep1Lists(); };
+        // Style pour aligner la miniature, le texte et le bouton + proprement
+        item.style = "display: flex; align-items: center; gap: 12px; padding: 10px 16px; border-bottom: 1px solid #27272a; transition: background 0.2s;";
+        
+        // POINT 4 : On va chercher la miniature (prend l'image locale ou affiche un carré propre)
+        const imgSrc = posture.imageName ? posture.imageName : '';
+        
+        item.innerHTML = `
+          <img src="${imgSrc}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px; background-color: #27272a;" onerror="this.style.visibility='hidden'">
+          <div style="flex-grow: 1;">
+            <span style="font-weight: 500; display: block;">${posture.postureName}</span>
+            <span id="badge-add-${posture.id}" style="font-size: 11px; color: var(--accent-success); font-weight: bold; display: none;">Ajouté !</span>
+          </div>
+          <span style="color:var(--accent-primary); font-weight:bold; font-size: 20px; padding: 4px;">+</span>
+        `;
+        
+        item.onclick = () => { 
+          // Ajout réel de la posture
+          wizardRoutineData.postures.push(JSON.parse(JSON.stringify(posture))); 
+          
+          // POINT 5 : Effet de retour visuel immédiat
+          item.style.backgroundColor = '#14321a'; // Flash vert sombre
+          const badge = document.getElementById(`badge-add-${posture.id}`);
+          if (badge) badge.style.display = 'block';
+          
+          // Petit délai avant de rafraîchir la liste complète pour laisser le temps de voir le flash
+          setTimeout(() => {
+            renderStep1Lists();
+          }, 400);
+        };
         availContainer.appendChild(item);
       });
     }
-
+    
     function setupSwipeGesturesOnRow(rowEl, index) {
       let touchStartX = 0, currentX = 0;
       rowEl.addEventListener('touchstart', (e) => { touchStartX = e.touches[0].clientX; rowEl.style.transition = 'none'; }, {passive: true});
@@ -992,13 +1021,19 @@
       document.getElementById('player-status-text').innerText = "Awaiting Vocal Command (Say START or GO)";
       document.getElementById('player-timer-digits').innerText = countdownRemaining;
       document.getElementById('btn-player-toggle').innerText = "▶️";
-      startMicListening();
-      executeTextToSpeechVocalNotification(p.postureName);
-    }
-
-    function transitionToActiveTimerState2() {
+	  startMicListening();
+      // On dit le nom de la posture uniquement au début (côté gauche ou posture simple)
+      if (activeSide === 'left') {
+        executeTextToSpeechVocalNotification(p.postureName);
+      }
+	function transitionToActiveTimerState2() {
       clearActiveAsynchronousMemoryInstances(); activeTimerState = 2;
       stopMicListening();
+
+      // Double bip aigu pour annoncer le départ du chrono !
+      executeSystemOscillatorBeep(900, 0.1);
+      setTimeout(() => { executeSystemOscillatorBeep(900, 0.15); }, 130);
+
       document.getElementById('player-status-text').innerText = "Timer Running";
       document.getElementById('btn-player-toggle').innerText = "⏸️";
       let nextNotificationDispatched = false;
@@ -1080,7 +1115,7 @@
           }
           let volumeMoyen = volumeTotal / bufferLength;
 
-          if (volumeMoyen > 75) { 
+          if (volumeMoyen > 45) { 
             stopMicListening();
             transitionToActiveTimerState2();
             return;
@@ -1108,10 +1143,18 @@
       localAnalyser = null;
     }
 
-    function executeTextToSpeechVocalNotification(textString) {
-      try { if (window.speechSynthesis) { const u = new SpeechSynthesisUtterance(textString); u.lang = 'en-US'; window.speechSynthesis.speak(u); } } catch(e){}
+function executeTextToSpeechVocalNotification(textString) {
+      try { 
+        if (window.speechSynthesis) { 
+          window.speechSynthesis.cancel(); // Évite que les phrases se chevauchent et coupent
+          const u = new SpeechSynthesisUtterance(textString); 
+          u.lang = 'en-US'; 
+          u.volume = 1.0; // POINT 7 : Force le volume de la voix au maximum
+          window.speechSynthesis.speak(u); 
+        } 
+      } catch(e){}
     }
-
+    
     function executeSystemOscillatorBeep(freq, dur) {
       try {
         const AudioContext = window.AudioContext || window.webkitAudioContext; if (!AudioContext) return;
@@ -1157,6 +1200,27 @@
       stopMicListening();
       renderHomeView(); 
       showView('view-home'); 
+    }
+	function duplicateRoutine(routineId) {
+      // 1. Trouver la routine originale
+      const originalRoutine = appData.routines.find(r => r.id === routineId);
+      if (!originalRoutine) return;
+    
+      // 2. Créer une copie parfaite de la routine
+      const copiedRoutine = JSON.parse(JSON.stringify(originalRoutine));
+      
+      // 3. Lui donner un nouvel ID unique et changer son nom
+      copiedRoutine.id = 'routine-' + Date.now();
+      copiedRoutine.name = originalRoutine.name + " (Copie)";
+    
+      // 4. L'ajouter au stockage et rafraîchir l'écran
+      appData.routines.push(copiedRoutine);
+      commitToStorage();
+      
+      // Rafraîchir l'affichage (Utilise renderHomeView comme dans ton exitPlaybackSession)
+      if (typeof renderHomeView === 'function') {
+        renderHomeView();
+      }
     }
   </script>
 </body>
