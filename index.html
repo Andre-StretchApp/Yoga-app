@@ -496,7 +496,7 @@
         <input type="file" id="import-file-input" class="hidden" accept=".json" onchange="importData(event)">
       </div>
 
-      <div class="app-version">v4.4</div>
+      <div class="app-version">v4.5</div>
     </section>
 
     <section id="view-routine-manager" class="app-view hidden">
@@ -712,36 +712,56 @@
       }
     }
 
-    function exportData() {
-      const blob = new Blob([JSON.stringify(appData, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'mes_postures.json';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+function exportData() {
+      try {
+        const blob = new Blob([JSON.stringify(appData, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'mes_postures.json';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        alert("Exportation réussie ! Fichier 'mes_postures.json' enregistré.");
+      } catch (e) {
+        alert("Erreur lors de l'exportation : " + e.message);
+      }
     }
 
-    function triggerImportClick() { document.getElementById('import-file-input').click(); }
+    function triggerImportClick() { 
+      document.getElementById('import-file-input').click(); 
+    }
+
     function importData(event) {
       const file = event.target.files[0];
       if (!file) return;
+      
       const reader = new FileReader();
       reader.onload = function(e) {
         try {
           const parsed = JSON.parse(e.target.result);
-          if (parsed.globalCatalog && parsed.routines) {
-            appData = parsed;
+          
+          // Vérification adaptative pour accepter ton catalogue et tes routines
+          if (parsed && (parsed.globalCatalog || parsed.routines)) {
+            if (parsed.globalCatalog) appData.globalCatalog = parsed.globalCatalog;
+            if (parsed.routines) appData.routines = parsed.routines;
+            
             commitToStorage();
             renderHomeView();
+            alert("Importation réussie ! Vos routines et postures sont prêtes.");
+          } else {
+            alert("Format invalide : Le fichier JSON ne semble pas contenir de catalogue ou de routines StretchApp.");
           }
-        } catch (err) { alert("Import error"); }
+        } catch (err) { 
+          alert("Erreur de lecture du fichier JSON : " + err.message); 
+        }
+        // Libère l'input pour permettre de ré-importer le même fichier au besoin
+        event.target.value = '';
       };
       reader.readAsText(file);
     }
-
+    
     function initCreateRoutineWorkflow() {
       editingRoutineId = null; currentWorkflowStep = 1; wizardRoutineData = { name: '', postures: [] };
       setupWorkflowUIPanels(); showView('view-routine-manager');
