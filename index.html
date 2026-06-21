@@ -496,7 +496,7 @@
         <input type="file" id="import-file-input" class="hidden" accept=".json" onchange="importData(event)">
       </div>
 
-      <div class="app-version">v4.6</div>
+      <div class="app-version">v4.7</div>
     </section>
 
     <section id="view-routine-manager" class="app-view hidden">
@@ -818,7 +818,7 @@ function exportData() {
               wrapper.innerHTML = `
                 <div class="swipe-row-bg">Remove</div>
                 <div class="swipe-row-fg" data-index="${idx}" style="display: flex; align-items: center; gap: 12px; padding: 10px 16px;">
-                  <img src="${imgSrc}" style="width: 32px; height: 32px; object-fit: cover; border-radius: 4px; background-color: #27272a;" onerror="this.style.visibility='hidden'">
+                  <img src="${imgSrc}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px; background-color: #27272a;" onerror="this.style.visibility='hidden'">
                   <span style="flex-grow: 1;">${posture.postureName}</span>
                   <span>➔</span>
                 </div>
@@ -966,7 +966,7 @@ function exportData() {
           <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 12px;">
             <div class="config-left" style="display: flex; align-items: center; gap: 12px;">
               <div class="drag-handle">⋮⋮</div>
-              <img src="${imgSrc}" style="width: 32px; height: 32px; object-fit: cover; border-radius: 4px; background-color: #27272a;" onerror="this.style.visibility='hidden'">
+              <img src="${imgSrc}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px; background-color: #27272a;" onerror="this.style.visibility='hidden'">
               <div>${posture.postureName} ${doubleBadge}</div>
             </div>
             <div class="timer-controls">
