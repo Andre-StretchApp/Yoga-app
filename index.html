@@ -522,7 +522,7 @@
         <button onclick="hideSettingsPage()" class="btn-db-trigger" style="width: 100%; padding: 12px; background: #3b82f6; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">Retour à l'accueil</button>
       </section>
 
-      <div class="app-version">v4.8b</div>
+      <div class="app-version">v4.8c</div>
     </section>
 
     <section id="view-routine-manager" class="app-view hidden">
@@ -1090,4 +1090,361 @@
               row.style.opacity = '1';
               row.style.background = 'transparent';
               
-              const touch = e.changedTouches
+              const touch = e.changedTouches[0];
+              const targetEl = document.elementFromPoint(touch.clientX, touch.clientY);
+              const targetRow = targetEl ? targetEl.closest('.config-row') : null;
+              
+              if(targetRow) {
+                  const targetHandle = targetRow.querySelector('.drag-handle');
+                  const targetIdx = parseInt(targetHandle.getAttribute('data-index'));
+                  if(draggedIdx !== null && targetIdx !== draggedIdx) {
+                      const movedItem = wizardRoutineData.postures.splice(draggedIdx, 1)[0];
+                      wizardRoutineData.postures.splice(targetIdx, 0, movedItem);
+                      renderStep2Configs();
+                  }
+              }
+              draggedIdx = null;
+          });
+      });
+  }
+
+  function triggerImportClick() {
+      document.getElementById('import-file-input').click();
+  }
+
+  function exportData() {
+      const exportPackage = {
+          appVersion: "4.8a",
+          appData: appData,
+          appSettings: appSettings
+      };
+      const blob = new Blob([JSON.stringify(exportPackage, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `stretchapp_backup_${new Date().toISOString().slice(0,10)}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+  }
+
+  function importData(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      
+      const reader = new FileReader();
+      reader.onload = function(e) {
+          try {
+              const parsed = JSON.parse(e.target.result);
+              let targetData = null;
+              let targetSettings = null;
+
+              if (parsed && parsed.appData === undefined && (parsed.globalCatalog || parsed.routines)) {
+                  targetData = parsed;
+              } else if (parsed && parsed.appData) {
+                  targetData = parsed.appData;
+                  targetSettings = parsed.appSettings;
+              }
+
+              if (targetData) {
+                  if (targetData.globalCatalog) appData.globalCatalog = targetData.globalCatalog;
+                  if (targetData.routines) appData.routines = targetData.routines;
+                  
+                  if (targetSettings) {
+                      appSettings = targetSettings;
+                      saveSettingsToLocalStorage();
+                  }
+                  
+                  commitToStorage();
+                  renderHomeView();
+                  alert("Importation réussie ! Vos routines et vos réglages sont prêts.");
+              } else {
+                  alert("Format invalide : Le fichier JSON ne semble pas contenir de données StretchApp.");
+              }
+          } catch (err) { 
+              alert("Erreur de lecture du fichier JSON : " + err.message); 
+          }
+          event.target.value = '';
+      };
+      reader.readAsText(file);
+  }
+
+  function startRoutinePlayback(id) {
+      const r = appData.routines.find(x => x.id === id);
+      if(!r || r.postures.length === 0) return;
+      activeRoutine = r;
+      activeStepIdx = 0;
+      activeSide = 'left';
+      showView('view-player');
+      loadActivePostureIndexSequence();
+  }
+
+  function loadActivePostureIndexSequence() {
+      clearActiveAsynchronousMemoryInstances();
+      const currentPosture = activeRoutine.postures[activeStepIdx];
+      
+      document.getElementById('player-progress').innerText = `${activeStepIdx + 1} of ${activeRoutine.postures.length}`;
+      document.getElementById('player-posture-title').innerText = currentPosture.postureName;
+      
+      const nextPosture = activeRoutine.postures[activeStepIdx + 1];
+      if(nextPosture) {
+          document.getElementById('player-up-next').innerText = nextPosture.postureName;
+      } else {
+          document.getElementById('player-up-next').innerText = 'Done!';
+      }
+
+      const imgFrame = document.getElementById('player-image-display');
+      imgFrame.innerHTML = '';
+      if(currentPosture.imageName) {
+          const img = document.createElement('img');
+          img.src = currentPosture.imageName;
+          img.alt = currentPosture.postureName;
+          imgFrame.appendChild(img);
+      }
+
+      if(currentPosture.prepDelay > 0) {
+          activeTimerState = 2;
+          countdownRemaining = currentPosture.prepDelay;
+          document.getElementById('player-side-indicator').innerText = 'PREPARATION';
+          document.getElementById('player-status-text').innerText = 'Get into Position';
+          triggerBeepSoundAlert('prep_start');
+      } else {
+          activeTimerState = 3;
+          countdownRemaining = currentPosture.durationPerSide;
+          document.getElementById('player-side-indicator').innerText = currentPosture.isDouble ? activeSide.toUpperCase() + ' SIDE' : 'SINGLE SIDE';
+          document.getElementById('player-status-text').innerText = 'Awaiting Vocal Command';
+      }
+
+      renderPlayerDigitsDisplay();
+      if(activeTimerState === 3) {
+          startSpeechRecognitionPulse();
+      } else if(activeTimerState === 2) {
+          executeClockCountdownExecution();
+      }
+  }
+
+  function renderPlayerDigitsDisplay() {
+      const s = countdownRemaining % 60;
+      document.getElementById('player-timer-digits').innerText = s < 10 ? '0' + s : s;
+  }
+
+  function executeClockCountdownExecution() {
+      clearInterval(timerIntervalId);
+      document.getElementById('btn-player-toggle').innerText = '⏸️';
+      
+      timerIntervalId = setInterval(() => {
+          if(countdownRemaining > 1) {
+              countdownRemaining--;
+              renderPlayerDigitsDisplay();
+              
+              const currentPosture = activeRoutine.postures[activeStepIdx];
+              if(activeTimerState === 3 && currentPosture.halfwayBeep && countdownRemaining === Math.floor(currentPosture.durationPerSide / 2)) {
+                  triggerBeepSoundAlert('halfway');
+              }
+          } else {
+              clearInterval(timerIntervalId);
+              handleClockTimerExhaustionSegment();
+          }
+      }, 1000);
+  }
+
+  function handleClockTimerExhaustionSegment() {
+      if(activeTimerState === 2) {
+          activeTimerState = 3;
+          const currentPosture = activeRoutine.postures[activeStepIdx];
+          countdownRemaining = currentPosture.durationPerSide;
+          document.getElementById('player-side-indicator').innerText = currentPosture.isDouble ? activeSide.toUpperCase() + ' SIDE' : 'SINGLE SIDE';
+          document.getElementById('player-status-text').innerText = 'Awaiting Vocal Command';
+          renderPlayerDigitsDisplay();
+          startSpeechRecognitionPulse();
+      } else if(activeTimerState === 3) {
+          triggerBeepSoundAlert('end');
+          playerActionNext();
+      }
+  }
+
+  function playerActionToggle() {
+      if(timerIntervalId) {
+          clearInterval(timerIntervalId);
+          timerIntervalId = null;
+          stopMicListening();
+          document.getElementById('btn-player-toggle').innerText = '▶️';
+          document.getElementById('player-status-text').innerText = 'Paused';
+      } else {
+          if(activeTimerState === 3 && document.getElementById('player-status-text').innerText === 'Awaiting Vocal Command') {
+              document.getElementById('player-status-text').innerText = 'Running (Manual Overrule)';
+          }
+          executeClockCountdownExecution();
+      }
+  }
+
+  function playerActionNext() {
+      clearActiveAsynchronousMemoryInstances();
+      const currentPosture = activeRoutine.postures[activeStepIdx];
+      
+      if(currentPosture.isDouble && activeSide === 'left') {
+          activeSide = 'right';
+          loadActivePostureIndexSequence();
+      } else if(activeStepIdx < activeRoutine.postures.length - 1) {
+          activeStepIdx++;
+          activeSide = 'left';
+          loadActivePostureIndexSequence();
+      } else {
+          exitPlaybackSession();
+      }
+  }
+
+  function playerActionBack() {
+      clearActiveAsynchronousMemoryInstances();
+      if (activeSide === 'right') {
+          activeSide = 'left';
+      } else if (activeStepIdx > 0) {
+          activeStepIdx--;
+          activeSide = activeRoutine.postures[activeStepIdx].isDouble ? 'right' : 'left';
+      }
+      loadActivePostureIndexSequence();
+  }
+
+  function exitPlaybackSession() {
+      clearActiveAsynchronousMemoryInstances();
+      activeRoutine = null;
+      stopMicListening();
+      renderHomeView();
+      showView('view-home');
+  }
+
+  function duplicateRoutine(routineId) {
+      const originalRoutine = appData.routines.find(r => r.id === routineId);
+      if (!originalRoutine) return;
+    
+      const copiedRoutine = JSON.parse(JSON.stringify(originalRoutine));
+      copiedRoutine.id = 'routine-' + Date.now();
+      copiedRoutine.name = originalRoutine.name + " (Copie)";
+    
+      appData.routines.push(copiedRoutine);
+      commitToStorage();
+      exitPlaybackSession();
+  }
+
+  function clearActiveAsynchronousMemoryInstances() {
+      clearInterval(timerIntervalId);
+      timerIntervalId = null;
+      clearTimeout(countdownTimeoutId);
+      countdownTimeoutId = null;
+  }
+
+  // ==========================================
+  // SYSTÈME AUDIO AVANCÉ (BIPS SYNTHÉTIQUES)
+  // ==========================================
+  function triggerBeepSoundAlert(type) {
+      try {
+          const volumeGain = appSettings.beepVolume / 100;
+          const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+          
+          if(type === 'prep_start') {
+              playToneSequence(audioCtx, [600], 0.1, volumeGain);
+          } else if(type === 'halfway') {
+              playToneSequence(audioCtx, [523.25, 659.25], 0.12, volumeGain);
+          } else if(type === 'end') {
+              playToneSequence(audioCtx, [880, 880, 1200], 0.08, volumeGain);
+          }
+      } catch(e) {
+          console.warn("Audio Context failure");
+      }
+  }
+
+  function playToneSequence(ctx, freqs, duration, volume) {
+      let timeOffset = ctx.currentTime;
+      freqs.forEach(f => {
+          const osc = ctx.createOscillator();
+          const gainNode = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(f, timeOffset);
+          gainNode.gain.setValueAtTime(volume, timeOffset);
+          
+          osc.connect(gainNode);
+          gainNode.connect(ctx.destination);
+          
+          osc.start(timeOffset);
+          osc.stop(timeOffset + duration);
+          timeOffset += duration + 0.03;
+      });
+  }
+
+  // ==========================================
+  // ANALYSEUR DE SEUIL MICRO (FALLBACK)
+  // ==========================================
+  let localAudioStream = null;
+  let audioProcessorContext = null;
+
+  function setupNativeSpeechRecognition() {
+      console.log("Audio pipeline hardware ready.");
+  }
+
+  function startSpeechRecognitionPulse() {
+      stopMicListening();
+      
+      const statusBanner = document.getElementById('player-status-text');
+      statusBanner.innerText = "Listening...";
+      statusBanner.style.color = "#16a34a";
+
+      navigator.mediaDevices.getUserMedia({ audio: true, video: false })
+      .then(stream => {
+          localAudioStream = stream;
+          audioProcessorContext = new (window.AudioContext || window.webkitAudioContext)();
+          const source = audioProcessorContext.createMediaStreamSource(stream);
+          const analyser = audioProcessorContext.createAnalyser();
+          analyser.fftSize = 256;
+          source.connect(analyser);
+
+          const bufferLength = analyser.frequencyBinCount;
+          const dataArray = new Uint8Array(bufferLength);
+
+          function checkVolumeLevel() {
+              if (!localAudioStream) return;
+              analyser.getByteFrequencyData(dataArray);
+              
+              let total = 0;
+              for (let i = 0; i < bufferLength; i++) {
+                  total += dataArray[i];
+              }
+              let average = total / bufferLength;
+              let currentPercentage = (average / 128) * 100;
+
+              // Comparaison avec la valeur dynamique configurée par l'utilisateur
+              if (currentPercentage > appSettings.micThreshold) {
+                  stopMicListening();
+                  statusBanner.innerText = "Triggered!";
+                  statusBanner.style.color = "var(--text-main)";
+                  executeClockCountdownExecution();
+              } else {
+                  countdownTimeoutId = setTimeout(checkVolumeLevel, 50);
+              }
+          }
+          checkVolumeLevel();
+      })
+      .catch(err => {
+          statusBanner.innerText = "Mic Error / Denied";
+          statusBanner.style.color = "var(--accent-danger)";
+      });
+  }
+
+  function stopMicListening() {
+      clearTimeout(countdownTimeoutId);
+      countdownTimeoutId = null;
+      
+      if (localAudioStream) {
+          localAudioStream.getTracks().forEach(track => track.stop());
+          localAudioStream = null;
+      }
+      if (audioProcessorContext && audioProcessorContext.state !== 'closed') {
+          audioProcessorContext.close();
+          audioProcessorContext = null;
+      }
+      const statusBanner = document.getElementById('player-status-text');
+      if (statusBanner) statusBanner.style.color = "var(--text-muted)";
+  }
+  </script>
+</body>
+</html>
