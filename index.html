@@ -498,7 +498,7 @@
         <input type="file" id="import-file-input" class="hidden" accept=".json" onchange="importData(event)">
       </div>
 
-      <div class="app-version">v4.8</div>
+      <div class="app-version">v4.8a</div>
     </section> <section id="page-global-settings" class="app-view hidden" style="display: none; padding: 16px; background: #1a1a24; border-radius: 12px; margin-top: 16px;">
       <h2 style="margin-top: 0; color: #fff;">Réglages Globaux</h2>
       
@@ -841,17 +841,18 @@ function importData(event) {
       const reader = new FileReader();
       reader.onload = function(e) {
         try {
+          // 1. On lit et on décode le fichier JSON en premier !
           const parsed = JSON.parse(e.target.result);
           
           let targetData = null;
           let targetSettings = null;
 
-          // Détecter le format du fichier importé
-          if (parsed && parsed.exportPackage === undefined && (parsed.globalCatalog || parsed.routines)) {
-            // ANCIEN FORMAT (directement appData)
+          // 2. Maintenant qu'on a "parsed", on peut l'analyser de façon sécuritaire
+          if (parsed && parsed.appData === undefined && (parsed.globalCatalog || parsed.routines)) {
+            // ANCIEN FORMAT (v4.7 et moins, directement appData)
             targetData = parsed;
           } else if (parsed && parsed.appData) {
-            // NOUVEAU FORMAT (avec les réglages inclus)
+            // NOUVEAU FORMAT (v4.8+, avec les réglages inclus)
             targetData = parsed.appData;
             targetSettings = parsed.appSettings;
           }
