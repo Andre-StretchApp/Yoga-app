@@ -483,52 +483,46 @@
 </head>
 <body>
 
-  <div class="app-container">
+<div class="app-container">
+    
     <section id="view-home" class="app-view">
       <h1>Routines</h1>
       <button class="btn-create-routine" onclick="initCreateRoutineWorkflow()">Create a routine</button>
       
       <div id="routines-list"></div>
 
-	<div class="backup-zone">
-            <button class="btn-backup" onclick="exportData()">Export Catalog</button>
-            <button class="btn-backup" onclick="triggerImportClick()">Import Catalog</button>
-            <button class="btn-backup" onclick="showSettingsPage()">⚙️ Réglages</button>
-            <input type="file" id="import-file-input" class="hidden" accept=".json" onchange="importData(event)">
-          </div>
-
-          <!-- PAGE REGLAGES GLOBAUX -->
-          <section id="page-global-settings" class="app-view hidden" style="display: none; padding: 16px;">
-            <h2 style="margin-top: 0; color: #fff;">Réglages Globaux</h2>
-            
-            <!-- Section Micro -->
-            <div style="background: #1e1e22; padding: 16px; border-radius: 8px; margin-bottom: 16px; border: 1px solid #27272a;">
-              <label style="display: block; font-weight: bold; margin-bottom: 8px; color: #fff;">🎤 Seuil du micro (Sensibilité)</label>
-              <p style="font-size: 12px; color: var(--text-muted); margin-top: 0; margin-bottom: 12px;">Augmente le % si le chrono part tout seul à cause du frottement ou du déshumidificateur.</p>
-              <div style="display: flex; align-items: center; gap: 12px;">
-                <input type="range" id="slider-mic-threshold" min="5" max="95" step="5" style="flex-grow: 1; accent-color: #3b82f6;" oninput="updateMicSettingsLive(this.value)">
-                <span id="display-mic-threshold" style="font-weight: bold; width: 45px; text-align: right; color: #fff;">45%</span>
-              </div>
-            </div>
-
-            <!-- Section Bips -->
-            <div style="background: #1e1e22; padding: 16px; border-radius: 8px; margin-bottom: 24px; border: 1px solid #27272a;">
-              <label style="display: block; font-weight: bold; margin-bottom: 8px; color: #fff;">🔊 Volume général des Bips</label>
-              <p style="font-size: 12px; color: var(--text-muted); margin-top: 0; margin-bottom: 12px;">Ajuste la puissance des alertes (Début, Milieu, Fin) pour percer le bruit des ventilateurs.</p>
-              <div style="display: flex; align-items: center; gap: 12px;">
-                <input type="range" id="slider-beep-volume" min="10" max="100" step="5" style="flex-grow: 1; accent-color: #3b82f6;" oninput="updateBeepSettingsLive(this.value)">
-                <span id="display-beep-volume" style="font-weight: bold; width: 45px; text-align: right; color: #fff;">80%</span>
-              </div>
-              <button onclick="testBeepVolume()" style="margin-top: 12px; padding: 6px 12px; background: #27272a; border: 1px solid #3f3f46; border-radius: 4px; color: #fff; font-size: 13px; cursor: pointer;">🎵 Tester le son</button>
-            </div>
-
-            <button onclick="hideSettingsPage()" class="btn-db-trigger" style="width: 100%; padding: 12px; background: #3b82f6; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">Retour à l'accueil</button>
-          </section>
+      <div class="backup-zone">
+        <button class="btn-backup" onclick="exportData()">Export Catalog</button>
+        <button class="btn-backup" onclick="triggerImportClick()">Import Catalog</button>
+        <button class="btn-backup" onclick="showSettingsPage()">⚙️ Réglages</button>
+        <input type="file" id="import-file-input" class="hidden" accept=".json" onchange="importData(event)">
+      </div>
 
       <div class="app-version">v4.8</div>
-    </section>
+    </section> <section id="page-global-settings" class="app-view hidden" style="display: none; padding: 16px; background: #1a1a24; border-radius: 12px; margin-top: 16px;">
+      <h2 style="margin-top: 0; color: #fff;">Réglages Globaux</h2>
+      
+      <div style="background: #1e1e22; padding: 16px; border-radius: 8px; margin-bottom: 16px; border: 1px solid #27272a;">
+        <label style="display: block; font-weight: bold; margin-bottom: 8px; color: #fff;">🎤 Seuil du micro (Sensibilité)</label>
+        <p style="font-size: 12px; color: var(--text-muted); margin-top: 0; margin-bottom: 12px;">Augmente le % si le chrono part tout seul à cause du frottement ou du déshumidificateur.</p>
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <input type="range" id="slider-mic-threshold" min="5" max="95" step="5" style="flex-grow: 1; accent-color: #3b82f6;" oninput="updateMicSettingsLive(this.value)">
+          <span id="display-mic-threshold" style="font-weight: bold; width: 45px; text-align: right; color: #fff;">45%</span>
+        </div>
+      </div>
 
-    <section id="view-routine-manager" class="app-view hidden">
+      <div style="background: #1e1e22; padding: 16px; border-radius: 8px; margin-bottom: 24px; border: 1px solid #27272a;">
+        <label style="display: block; font-weight: bold; margin-bottom: 8px; color: #fff;">🔊 Volume général des Bips</label>
+        <p style="font-size: 12px; color: var(--text-muted); margin-top: 0; margin-bottom: 12px;">Ajuste la puissance des alertes (Début, Milieu, Fin) pour percer le bruit des ventilateurs.</p>
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <input type="range" id="slider-beep-volume" min="10" max="100" step="5" style="flex-grow: 1; accent-color: #3b82f6;" oninput="updateBeepSettingsLive(this.value)">
+          <span id="display-beep-volume" style="font-weight: bold; width: 45px; text-align: right; color: #fff;">80%</span>
+        </div>
+        <button onclick="testBeepVolume()" style="margin-top: 12px; padding: 6px 12px; background: #27272a; border: 1px solid #3f3f46; border-radius: 4px; color: #fff; font-size: 13px; cursor: pointer;">🎵 Tester le son</button>
+      </div>
+
+      <button onclick="hideSettingsPage()" class="btn-db-trigger" style="width: 100%; padding: 12px; background: #3b82f6; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">Retour à l'accueil</button>
+    </section> <section id="view-routine-manager" class="app-view hidden">
       <div id="panel-step-1" class="workflow-panel">
         <div class="step-indicator">Step 1 of 3: Select Stretches</div>
         <h2>Assemble Routine</h2>
