@@ -1271,22 +1271,11 @@ async function startMicListening() {
           }
           let volumeMoyen = volumeTotal / bufferLength;
 
-          // Utilise maintenant le seuil choisi avec le slider (ex: 60% ou 70%)
           if (volumeMoyen > appSettings.micThreshold) { 
             stopMicListening();
             transitionToActiveTimerState2();
             return;
           }
-          
-          requestAnimationFrame(checkAudioLocale);
-        };
-        
-        requestAnimationFrame(checkAudioLocale);
-        
-      } catch (e) {
-        console.warn("Impossible d'activer le micro local :", e);
-      }
-    }
           
           requestAnimationFrame(checkAudioLocale);
         };
@@ -1304,10 +1293,9 @@ async function startMicListening() {
         micStreamInstance = null;
       }
       if (audioContextInstance) {
-        try { audioContextInstance.close(); } catch(e){}
+        audioContextInstance.close();
         audioContextInstance = null;
       }
-      localAnalyser = null;
     }
 
 function executeTextToSpeechVocalNotification(textString) {
@@ -1390,6 +1378,7 @@ function executeSystemOscillatorBeep(freq, dur) {
       if (typeof renderHomeView === 'function') {
         renderHomeView();
       }
+    } 
     </script>
 </body>
 </html>
