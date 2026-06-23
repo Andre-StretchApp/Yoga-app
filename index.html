@@ -490,13 +490,42 @@
       
       <div id="routines-list"></div>
 
-      <div class="backup-zone">
-        <button class="btn-backup" onclick="exportData()">Export Catalog</button>
-        <button class="btn-backup" onclick="triggerImportClick()">Import Catalog</button>
-        <input type="file" id="import-file-input" class="hidden" accept=".json" onchange="importData(event)">
-      </div>
+	<div class="backup-zone">
+            <button class="btn-backup" onclick="exportData()">Export Catalog</button>
+            <button class="btn-backup" onclick="triggerImportClick()">Import Catalog</button>
+            <button class="btn-backup" onclick="showSettingsPage()">⚙️ Réglages</button>
+            <input type="file" id="import-file-input" class="hidden" accept=".json" onchange="importData(event)">
+          </div>
 
-      <div class="app-version">v4.7</div>
+          <!-- PAGE REGLAGES GLOBAUX -->
+          <section id="page-global-settings" class="app-view hidden" style="display: none; padding: 16px;">
+            <h2 style="margin-top: 0; color: #fff;">Réglages Globaux</h2>
+            
+            <!-- Section Micro -->
+            <div style="background: #1e1e22; padding: 16px; border-radius: 8px; margin-bottom: 16px; border: 1px solid #27272a;">
+              <label style="display: block; font-weight: bold; margin-bottom: 8px; color: #fff;">🎤 Seuil du micro (Sensibilité)</label>
+              <p style="font-size: 12px; color: var(--text-muted); margin-top: 0; margin-bottom: 12px;">Augmente le % si le chrono part tout seul à cause du frottement ou du déshumidificateur.</p>
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <input type="range" id="slider-mic-threshold" min="5" max="95" step="5" style="flex-grow: 1; accent-color: #3b82f6;" oninput="updateMicSettingsLive(this.value)">
+                <span id="display-mic-threshold" style="font-weight: bold; width: 45px; text-align: right; color: #fff;">45%</span>
+              </div>
+            </div>
+
+            <!-- Section Bips -->
+            <div style="background: #1e1e22; padding: 16px; border-radius: 8px; margin-bottom: 24px; border: 1px solid #27272a;">
+              <label style="display: block; font-weight: bold; margin-bottom: 8px; color: #fff;">🔊 Volume général des Bips</label>
+              <p style="font-size: 12px; color: var(--text-muted); margin-top: 0; margin-bottom: 12px;">Ajuste la puissance des alertes (Début, Milieu, Fin) pour percer le bruit des ventilateurs.</p>
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <input type="range" id="slider-beep-volume" min="10" max="100" step="5" style="flex-grow: 1; accent-color: #3b82f6;" oninput="updateBeepSettingsLive(this.value)">
+                <span id="display-beep-volume" style="font-weight: bold; width: 45px; text-align: right; color: #fff;">80%</span>
+              </div>
+              <button onclick="testBeepVolume()" style="margin-top: 12px; padding: 6px 12px; background: #27272a; border: 1px solid #3f3f46; border-radius: 4px; color: #fff; font-size: 13px; cursor: pointer;">🎵 Tester le son</button>
+            </div>
+
+            <button onclick="hideSettingsPage()" class="btn-db-trigger" style="width: 100%; padding: 12px; background: #3b82f6; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">Retour à l'accueil</button>
+          </section>
+
+      <div class="app-version">v4.8</div>
     </section>
 
     <section id="view-routine-manager" class="app-view hidden">
@@ -586,6 +615,77 @@
   </div>
 
   <script>
+  // ==========================================
+  // CONFIGURATION GLOBALE DES RÉGLAGES
+  // ==========================================
+  // Valeurs par défaut au premier démarrage
+  let appSettings = {
+      micThreshold: 45,  // Seuil du micro en %
+      beepVolume: 80     // Volume des bips en %
+  };
+  
+  // Afficher la page de réglages et cacher l'accueil
+  function showSettingsPage() {
+      document.getElementById('view-home').style.display = 'none'; // Cache l'accueil
+      document.getElementById('page-global-settings').style.display = 'block'; // Montre les réglages
+      
+      // Aligner les curseurs visuels avec les vraies valeurs en mémoire
+      document.getElementById('slider-mic-threshold').value = appSettings.micThreshold;
+      document.getElementById('display-mic-threshold').innerText = appSettings.micThreshold + "%";
+      document.getElementById('slider-beep-volume').value = appSettings.beepVolume;
+      document.getElementById('display-beep-volume').innerText = appSettings.beepVolume + "%";
+  }
+  
+  // Revenir à l'accueil
+  function hideSettingsPage() {
+      document.getElementById('page-global-settings').style.display = 'none';
+      document.getElementById('view-home').style.display = 'block';
+  }
+  
+  // Mise à jour en direct depuis le slider Micro
+  function updateMicSettingsLive(val) {
+      appSettings.micThreshold = parseInt(val);
+      document.getElementById('display-mic-threshold').innerText = val + "%";
+      saveSettingsToLocalStorage();
+  }
+  
+  // Mise à jour en direct depuis le slider Bips
+  function updateBeepSettingsLive(val) {
+      appSettings.beepVolume = parseInt(val);
+      document.getElementById('display-beep-volume').innerText = val + "%";
+      saveSettingsToLocalStorage();
+  }
+  
+  // Sauvegarde locale spécifique aux réglages
+  function saveSettingsToLocalStorage() {
+      localStorage.setItem('stretch_app_settings', JSON.stringify(appSettings));
+  }
+  
+  // Charger les réglages au démarrage
+  function loadSettingsFromLocalStorage() {
+      const saved = localStorage.getItem('stretch_app_settings');
+      if (saved) {
+          appSettings = JSON.parse(saved);
+      }
+  }
+  
+  // Générer un bip d'onde pure pour tester le volume instantanément
+  function testBeepVolume() {
+      const volumeGain = appSettings.beepVolume / 100;
+      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const oscillator = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+      
+      oscillator.type = 'sine';
+      oscillator.frequency.setValueAtTime(880, audioCtx.currentTime); // Note aiguë cristalline
+      gainNode.gain.setValueAtTime(volumeGain, audioCtx.currentTime);
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+      
+      oscillator.start();
+      oscillator.stop(audioCtx.currentTime + 0.15); // Bip court de 150ms
+  }
     // FILET DE SÉCURITÉ VISUEL : Affiche l'erreur sur l'écran si un plantage survient au démarrage
     window.onerror = function(msg, url, line) {
       const list = document.getElementById('routines-list');
@@ -620,6 +720,7 @@
     let countdownTimeoutId = null;
 
     window.addEventListener('DOMContentLoaded', () => {
+      loadSettingsFromLocalStorage();
       loadDataFromStorage();
       renderHomeView();
       setupNativeSpeechRecognition();
@@ -714,7 +815,13 @@
 
 function exportData() {
       try {
-        const blob = new Blob([JSON.stringify(appData, null, 2)], { type: 'application/json' });
+        // On crée un paquet global qui contient tes données ET tes réglages
+        const exportPackage = {
+          appData: appData,
+          appSettings: appSettings
+        };
+
+        const blob = new Blob([JSON.stringify(exportPackage, null, 2)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
@@ -733,7 +840,7 @@ function exportData() {
       document.getElementById('import-file-input').click(); 
     }
 
-    function importData(event) {
+function importData(event) {
       const file = event.target.files[0];
       if (!file) return;
       
@@ -742,16 +849,35 @@ function exportData() {
         try {
           const parsed = JSON.parse(e.target.result);
           
-          // Vérification adaptative pour accepter ton catalogue et tes routines
-          if (parsed && (parsed.globalCatalog || parsed.routines)) {
-            if (parsed.globalCatalog) appData.globalCatalog = parsed.globalCatalog;
-            if (parsed.routines) appData.routines = parsed.routines;
+          let targetData = null;
+          let targetSettings = null;
+
+          // Détecter le format du fichier importé
+          if (parsed && parsed.exportPackage === undefined && (parsed.globalCatalog || parsed.routines)) {
+            // ANCIEN FORMAT (directement appData)
+            targetData = parsed;
+          } else if (parsed && parsed.appData) {
+            // NOUVEAU FORMAT (avec les réglages inclus)
+            targetData = parsed.appData;
+            targetSettings = parsed.appSettings;
+          }
+
+          // Si on a trouvé des données valides, on les applique
+          if (targetData) {
+            if (targetData.globalCatalog) appData.globalCatalog = targetData.globalCatalog;
+            if (targetData.routines) appData.routines = targetData.routines;
+            
+            // Si le fichier contient des réglages de sliders, on les applique aussi
+            if (targetSettings) {
+              appSettings = targetSettings;
+              saveSettingsToLocalStorage(); // Enregistre les curseurs sur l'appareil
+            }
             
             commitToStorage();
             renderHomeView();
-            alert("Importation réussie ! Vos routines et postures sont prêtes.");
+            alert("Importation réussie ! Vos routines et vos réglages sont prêts.");
           } else {
-            alert("Format invalide : Le fichier JSON ne semble pas contenir de catalogue ou de routines StretchApp.");
+            alert("Format invalide : Le fichier JSON ne semble pas contenir de données StretchApp.");
           }
         } catch (err) { 
           alert("Erreur de lecture du fichier JSON : " + err.message); 
@@ -1121,7 +1247,7 @@ function exportData() {
       console.log("Moteur local initialisé (Silencieux)");
     }
 
-    async function startMicListening() {
+async function startMicListening() {
       if (activeTimerState !== 1) return;
       if (micStreamInstance) return; 
 
@@ -1154,11 +1280,22 @@ function exportData() {
           }
           let volumeMoyen = volumeTotal / bufferLength;
 
-          if (volumeMoyen > 45) { 
+          // Utilise maintenant le seuil choisi avec le slider (ex: 60% ou 70%)
+          if (volumeMoyen > appSettings.micThreshold) { 
             stopMicListening();
             transitionToActiveTimerState2();
             return;
           }
+          
+          requestAnimationFrame(checkAudioLocale);
+        };
+        
+        requestAnimationFrame(checkAudioLocale);
+        
+      } catch (e) {
+        console.warn("Impossible d'activer le micro local :", e);
+      }
+    }
           
           requestAnimationFrame(checkAudioLocale);
         };
@@ -1194,14 +1331,16 @@ function executeTextToSpeechVocalNotification(textString) {
       } catch(e){}
     }
     
-    function executeSystemOscillatorBeep(freq, dur) {
+function executeSystemOscillatorBeep(freq, dur) {
       try {
         const AudioContext = window.AudioContext || window.webkitAudioContext; if (!AudioContext) return;
         const ctx = new AudioContext(); const osc = ctx.createOscillator(); const gain = ctx.createGain();
         osc.type = 'sine'; 
         osc.frequency.setValueAtTime(freq, ctx.currentTime); 
         
-        gain.gain.setValueAtTime(0.7, ctx.currentTime);
+        // Calcule le volume de façon dynamique (ex: 80% devient 0.8)
+        const targetVolume = appSettings.beepVolume / 100;
+        gain.gain.setValueAtTime(targetVolume, ctx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + dur); 
         
         osc.connect(gain); gain.connect(ctx.destination);
