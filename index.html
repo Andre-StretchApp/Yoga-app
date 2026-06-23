@@ -622,9 +622,9 @@
       beepVolume: 80
   };
   
-// Afficher la page de réglages via le système natif de l'app
+// Afficher la page de réglages (Settings)
   function showSettingsPage() {
-      showView('page-global-settings'); // Utilise le vrai moteur de navigation de ton app !
+      showView('page-global-settings'); // Utilise le moteur de ton application pour basculer de vue !
       
       // Aligner les curseurs visuels avec les vraies valeurs en mémoire
       document.getElementById('slider-mic-threshold').value = appSettings.micThreshold;
@@ -633,9 +633,9 @@
       document.getElementById('display-beep-volume').innerText = appSettings.beepVolume + "%";
   }
   
-  // Revenir à l'accueil via le système natif de l'app
+  // Revenir à l'accueil
   function hideSettingsPage() {
-      showView('view-home'); // Rappelle l'accueil proprement sans recharger Chrome !
+      showView('view-home'); // Rappelle l'accueil proprement
   }
   
   function updateMicSettingsLive(val) {
