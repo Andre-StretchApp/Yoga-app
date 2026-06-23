@@ -483,7 +483,8 @@
 </head>
 <body>
 
-  <div class="app-container">
+<div class="app-container">
+    
     <section id="view-home" class="app-view">
       <h1>Routines</h1>
       <button class="btn-create-routine" onclick="initCreateRoutineWorkflow()">Create a routine</button>
@@ -497,41 +498,38 @@
         <input type="file" id="import-file-input" class="hidden" accept=".json" onchange="importData(event)">
       </div>
 
-      <section id="page-global-settings" class="app-view hidden" style="display: none; padding: 16px;">
-        <h2 style="margin-top: 0; color: #fff;">Réglages Globaux</h2>
-        
-        <div style="background: #1e1e22; padding: 16px; border-radius: 8px; margin-bottom: 16px; border: 1px solid #27272a;">
-          <label style="display: block; font-weight: bold; margin-bottom: 8px; color: #fff;">🎤 Seuil du micro (Sensibilité)</label>
-          <p style="font-size: 12px; color: var(--text-muted); margin-top: 0; margin-bottom: 12px;">Augmente le % si le chrono part tout seul à cause du frottement ou du déshumidificateur.</p>
-          <div style="display: flex; align-items: center; gap: 12px;">
-            <input type="range" id="slider-mic-threshold" min="5" max="95" step="5" style="flex-grow: 1; accent-color: #3b82f6;" oninput="updateMicSettingsLive(this.value)">
-            <span id="display-mic-threshold" style="font-weight: bold; width: 45px; text-align: right; color: #fff;">45%</span>
-          </div>
+      <div class="app-version">v4.8d</div>
+    </section> <section id="page-global-settings" class="app-view hidden" style="display: none; padding: 16px; background: #1a1a24; border-radius: 12px; margin-top: 16px;">
+      <h2 style="margin-top: 0; color: #fff;">Réglages Globaux</h2>
+      
+      <div style="background: #1e1e22; padding: 16px; border-radius: 8px; margin-bottom: 16px; border: 1px solid #27272a;">
+        <label style="display: block; font-weight: bold; margin-bottom: 8px; color: #fff;">🎤 Seuil du micro (Sensibilité)</label>
+        <p style="font-size: 12px; color: var(--text-muted); margin-top: 0; margin-bottom: 12px;">Augmente le % si le chrono part tout seul à cause du frottement ou du déshumidificateur.</p>
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <input type="range" id="slider-mic-threshold" min="5" max="95" step="5" style="flex-grow: 1; accent-color: #3b82f6;" oninput="updateMicSettingsLive(this.value)">
+          <span id="display-mic-threshold" style="font-weight: bold; width: 45px; text-align: right; color: #fff;">45%</span>
         </div>
+      </div>
 
-        <div style="background: #1e1e22; padding: 16px; border-radius: 8px; margin-bottom: 24px; border: 1px solid #27272a;">
-          <label style="display: block; font-weight: bold; margin-bottom: 8px; color: #fff;">🔊 Volume général des Bips</label>
-          <p style="font-size: 12px; color: var(--text-muted); margin-top: 0; margin-bottom: 12px;">Ajuste la puissance des alertes (Début, Milieu, Fin) pour percer le bruit des ventilateurs.</p>
-          <div style="display: flex; align-items: center; gap: 12px;">
-            <input type="range" id="slider-beep-volume" min="10" max="100" step="5" style="flex-grow: 1; accent-color: #3b82f6;" oninput="updateBeepSettingsLive(this.value)">
-            <span id="display-beep-volume" style="font-weight: bold; width: 45px; text-align: right; color: #fff;">80%</span>
-          </div>
-          <button onclick="testBeepVolume()" style="margin-top: 12px; padding: 6px 12px; background: #27272a; border: 1px solid #3f3f46; border-radius: 4px; color: #fff; font-size: 13px; cursor: pointer;">🎵 Tester le son</button>
+      <div style="background: #1e1e22; padding: 16px; border-radius: 8px; margin-bottom: 24px; border: 1px solid #27272a;">
+        <label style="display: block; font-weight: bold; margin-bottom: 8px; color: #fff;">🔊 Volume général des Bips</label>
+        <p style="font-size: 12px; color: var(--text-muted); margin-top: 0; margin-bottom: 12px;">Ajuste la puissance des alertes (Début, Milieu, Fin) pour percer le bruit des ventilateurs.</p>
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <input type="range" id="slider-beep-volume" min="10" max="100" step="5" style="flex-grow: 1; accent-color: #3b82f6;" oninput="updateBeepSettingsLive(this.value)">
+          <span id="display-beep-volume" style="font-weight: bold; width: 45px; text-align: right; color: #fff;">80%</span>
         </div>
+        <button onclick="testBeepVolume()" style="margin-top: 12px; padding: 6px 12px; background: #27272a; border: 1px solid #3f3f46; border-radius: 4px; color: #fff; font-size: 13px; cursor: pointer;">🎵 Tester le son</button>
+      </div>
 
-        <button onclick="hideSettingsPage()" class="btn-db-trigger" style="width: 100%; padding: 12px; background: #3b82f6; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">Retour à l'accueil</button>
-      </section>
-
-      <div class="app-version">v4.8c</div>
-    </section>
-
-    <section id="view-routine-manager" class="app-view hidden">
+      <button onclick="hideSettingsPage()" class="btn-db-trigger" style="width: 100%; padding: 12px; background: #3b82f6; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">Retour à l'accueil</button>
+    </section> <section id="view-routine-manager" class="app-view hidden">
       <div id="panel-step-1" class="workflow-panel">
         <div class="step-indicator">Step 1 of 3: Select Stretches</div>
         <h2>Assemble Routine</h2>
         <p style="font-size:12px; color:var(--text-muted); margin-bottom:8px;">Included (Swipe left to remove):</p>
         <div id="included-stretches-list" class="list-container"></div>
-        <button class="btn-db-trigger" onclick="toggleDatabaseSubscreen(true)">[Posture Database]</button> <p style="font-size:12px; color:var(--text-muted); margin-bottom:8px;">Available (Click to add):</p>
+        <button class="btn-db-trigger" onclick="toggleDatabaseSubscreen(true)">[Posture Database]</button>
+        <p style="font-size:12px; color:var(--text-muted); margin-bottom:8px;">Available (Click to add):</p>
         <div id="available-stretches-list" class="list-container"></div>
       </div>
 
@@ -561,7 +559,7 @@
       </div>
     </section>
 
-    <section id="view-builder" class="app-view hidden">
+	<section id="view-builder" class="app-view hidden">
       <h2>Create Posture</h2>
       
       <label style="font-size:14px; color:var(--text-muted);">Image File Name (Click to select from phone)</label>
@@ -614,42 +612,50 @@
   // ==========================================
   // CONFIGURATION GLOBALE DES RÉGLAGES
   // ==========================================
+  // Valeurs par défaut au premier démarrage
   let appSettings = {
       micThreshold: 45,  // Seuil du micro en %
       beepVolume: 80     // Volume des bips en %
   };
   
+  // Afficher la page de réglages et cacher l'accueil
   function showSettingsPage() {
-      document.getElementById('view-home').style.display = 'none';
-      document.getElementById('page-global-settings').style.display = 'block';
+      document.getElementById('view-home').style.display = 'none'; // Cache l'accueil
+      document.getElementById('page-global-settings').style.display = 'block'; // Montre les réglages
       
+      // Aligner les curseurs visuels avec les vraies valeurs en mémoire
       document.getElementById('slider-mic-threshold').value = appSettings.micThreshold;
       document.getElementById('display-mic-threshold').innerText = appSettings.micThreshold + "%";
       document.getElementById('slider-beep-volume').value = appSettings.beepVolume;
       document.getElementById('display-beep-volume').innerText = appSettings.beepVolume + "%";
   }
   
+  // Revenir à l'accueil
   function hideSettingsPage() {
       document.getElementById('page-global-settings').style.display = 'none';
       document.getElementById('view-home').style.display = 'block';
   }
   
+  // Mise à jour en direct depuis le slider Micro
   function updateMicSettingsLive(val) {
       appSettings.micThreshold = parseInt(val);
       document.getElementById('display-mic-threshold').innerText = val + "%";
       saveSettingsToLocalStorage();
   }
   
+  // Mise à jour en direct depuis le slider Bips
   function updateBeepSettingsLive(val) {
       appSettings.beepVolume = parseInt(val);
       document.getElementById('display-beep-volume').innerText = val + "%";
       saveSettingsToLocalStorage();
   }
   
+  // Sauvegarde locale spécifique aux réglages
   function saveSettingsToLocalStorage() {
       localStorage.setItem('stretch_app_settings', JSON.stringify(appSettings));
   }
   
+  // Charger les réglages au démarrage
   function loadSettingsFromLocalStorage() {
       const saved = localStorage.getItem('stretch_app_settings');
       if (saved) {
@@ -657,489 +663,191 @@
       }
   }
   
+  // Générer un bip d'onde pure pour tester le volume instantanément
   function testBeepVolume() {
       const volumeGain = appSettings.beepVolume / 100;
       const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
       const oscillator = audioCtx.createOscillator();
       const gainNode = audioCtx.createGain();
+      
       oscillator.type = 'sine';
-      oscillator.frequency.setValueAtTime(880, audioCtx.currentTime);
+      oscillator.frequency.setValueAtTime(880, audioCtx.currentTime); // Note aiguë cristalline
       gainNode.gain.setValueAtTime(volumeGain, audioCtx.currentTime);
+      
       oscillator.connect(gainNode);
       gainNode.connect(audioCtx.destination);
+      
       oscillator.start();
-      oscillator.stop(audioCtx.currentTime + 0.15);
+      oscillator.stop(audioCtx.currentTime + 0.15); // Bip court de 150ms
   }
-
-  window.onerror = function(msg, url, line) {
+    // FILET DE SÉCURITÉ VISUEL : Affiche l'erreur sur l'écran si un plantage survient au démarrage
+    window.onerror = function(msg, url, line) {
       const list = document.getElementById('routines-list');
       if (list) {
-          list.innerHTML = `<div style="background:#7f1d1d; color:white; padding:15px; border-radius:8px; font-family:monospace; margin-top:20px;"><b>CRASH DÉTECTÉ :</b><br>${msg}<br>Ligne: ${line}</div>`;
+        list.innerHTML = `<div style="background:#7f1d1d; color:white; padding:15px; border-radius:8px; font-family:monospace; margin-top:20px;"><b>CRASH DÉTECTÉ :</b><br>${msg}<br>Ligne: ${line}</div>`;
       }
       return false;
-  };
+    };
 
-  const DEFAULT_CATALOG = [
-    { id: "pigeon", postureName: "Pigeon Pose", imageName: "pigeon.jpg", durationPerSide: 45, isDouble: true, halfwayBeep: true, prepDelay: 3 },
-    { id: "cobra", postureName: "Cobra Pose", imageName: "cobra.jpg", durationPerSide: 30, isDouble: false, halfwayBeep: false, prepDelay: 0 }
-  ];
-
-  const DEFAULT_ROUTINES = [
-    { id: "routine-court", name: "court", postures: [
+    const DEFAULT_CATALOG = [
       { id: "pigeon", postureName: "Pigeon Pose", imageName: "pigeon.jpg", durationPerSide: 45, isDouble: true, halfwayBeep: true, prepDelay: 3 },
       { id: "cobra", postureName: "Cobra Pose", imageName: "cobra.jpg", durationPerSide: 30, isDouble: false, halfwayBeep: false, prepDelay: 0 }
-    ]}
-  ];
+    ];
 
-  let appData = { globalCatalog: [], routines: [] };
-  let currentWorkflowStep = 1;
-  let editingRoutineId = null;
-  let wizardRoutineData = { name: '', postures: [] };
-  let activeRoutine = null;
-  let activeStepIdx = 0;
-  let activeSide = 'left';
-  let activeTimerState = 1;
-  let countdownRemaining = 0;
-  let timerIntervalId = null;
-  let countdownTimeoutId = null;
+    const DEFAULT_ROUTINES = [
+      { id: "routine-court", name: "court", postures: [
+        { id: "pigeon", postureName: "Pigeon Pose", imageName: "pigeon.jpg", durationPerSide: 45, isDouble: true, halfwayBeep: true, prepDelay: 3 },
+        { id: "cobra", postureName: "Cobra Pose", imageName: "cobra.jpg", durationPerSide: 30, isDouble: false, halfwayBeep: false, prepDelay: 0 }
+      ]}
+    ];
 
-  window.addEventListener('DOMContentLoaded', () => {
+    let appData = { globalCatalog: [], routines: [] };
+    let currentWorkflowStep = 1; 
+    let editingRoutineId = null;
+    let wizardRoutineData = { name: '', postures: [] };
+    let activeRoutine = null;
+    let activeStepIdx = 0;
+    let activeSide = 'left'; 
+    let activeTimerState = 1; 
+    let countdownRemaining = 0;
+    let timerIntervalId = null;
+    let countdownTimeoutId = null;
+
+    window.addEventListener('DOMContentLoaded', () => {
       loadSettingsFromLocalStorage();
       loadDataFromStorage();
       renderHomeView();
       setupNativeSpeechRecognition();
-  });
+    });
 
-  function loadDataFromStorage() {
+    function loadDataFromStorage() {
       try {
-          const stored = localStorage.getItem('yogaData');
-          if (stored) {
-              let parsed = JSON.parse(stored);
-              if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-                  appData.globalCatalog = parsed.globalCatalog || [...DEFAULT_CATALOG];
-                  appData.routines = parsed.routines || [...DEFAULT_ROUTINES];
-              } else {
-                  resetToSeedData();
-              }
+        const stored = localStorage.getItem('yogaData');
+        if (stored) {
+          let parsed = JSON.parse(stored);
+          if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+            appData.globalCatalog = parsed.globalCatalog || [...DEFAULT_CATALOG];
+            appData.routines = parsed.routines || [...DEFAULT_ROUTINES];
           } else {
-              resetToSeedData();
+            resetToSeedData();
           }
-      } catch(e) {
+        } else {
           resetToSeedData();
+        }
+      } catch(e) {
+        resetToSeedData();
       }
-  }
+    }
 
-  function resetToSeedData() {
+    function resetToSeedData() {
       appData.globalCatalog = [...DEFAULT_CATALOG];
       appData.routines = [...DEFAULT_ROUTINES];
       commitToStorage();
-  }
+    }
 
-  function commitToStorage() {
+    function commitToStorage() {
       try {
-          localStorage.setItem('yogaData', JSON.stringify(appData));
+        localStorage.setItem('yogaData', JSON.stringify(appData));
       } catch(e) {
-          console.warn("Storage write blocked");
+        console.warn("Storage write blocked");
       }
-  }
+    }
 
-  function showView(viewId) {
+    function showView(viewId) {
       document.querySelectorAll('.app-view').forEach(v => v.classList.add('hidden'));
       document.getElementById(viewId).classList.remove('hidden');
-  }
+    }
 
-  function renderHomeView() {
+    function renderHomeView() {
       const container = document.getElementById('routines-list');
       container.innerHTML = '';
       if(appData.routines.length === 0) {
-          container.innerHTML = `<p style="color:var(--text-muted); text-align:center; padding:20px;">No routines generated yet.</p>`;
-          return;
+        container.innerHTML = `<p style="color:var(--text-muted); text-align:center; padding:20px;">No routines generated yet.</p>`;
+        return;
       }
       appData.routines.forEach(routine => {
-          const totalSecs = routine.postures.reduce((acc, p) => acc + (p.durationPerSide * (p.isDouble ? 2 : 1)), 0);
-          const mins = Math.ceil(totalSecs / 60);
-          const tile = document.createElement('div');
-          tile.className = 'routine-tile';
-          tile.innerHTML = `
-            <div class="routine-info" onclick="startRoutinePlayback('${routine.id}')">
-              <div class="routine-name">${routine.name}</div>
-              <div class="routine-duration">${mins} MINUTES</div>
-            </div>
-            <button class="tile-menu-btn" onclick="toggleTileContextMenu(event, '${routine.id}')">⋮</button>
-            <div class="context-menu hidden" id="menu-${routine.id}">
-              <button onclick="initEditRoutineWorkflow('${routine.id}')">Edit</button>
-              <button onclick="duplicateRoutine('${routine.id}')">Duplicate</button>
-              <button style="color:var(--accent-danger);" onclick="deleteRoutineDirectly('${routine.id}')">Delete</button>
-            </div>
-          `;
-          container.appendChild(tile);
+        const totalSecs = routine.postures.reduce((acc, p) => acc + (p.durationPerSide * (p.isDouble ? 2 : 1)), 0);
+        const mins = Math.ceil(totalSecs / 60);
+        const tile = document.createElement('div');
+        tile.className = 'routine-tile';
+        tile.innerHTML = `
+          <div class="routine-info" onclick="startRoutinePlayback('${routine.id}')">
+            <div class="routine-name">${routine.name}</div>
+            <div class="routine-duration">${mins} MINUTES</div>
+          </div>
+          <button class="tile-menu-btn" onclick="toggleTileContextMenu(event, '${routine.id}')">⋮</button>
+          <div class="context-menu hidden" id="menu-${routine.id}">
+            <button onclick="initEditRoutineWorkflow('${routine.id}')">Edit</button>
+            <button onclick="duplicateRoutine('${routine.id}')">Duplicate</button>
+            <button style="color:var(--accent-danger);" onclick="deleteRoutineDirectly('${routine.id}')">Delete</button>
+          </div>
+        `;
+        container.appendChild(tile);
       });
-  }
+    }
 
-  function toggleTileContextMenu(event, id) {
+    function toggleTileContextMenu(event, id) {
       event.stopPropagation();
       const targetMenu = document.getElementById(`menu-${id}`);
       const isHidden = targetMenu.classList.contains('hidden');
       document.querySelectorAll('.context-menu').forEach(m => m.classList.add('hidden'));
       if(isHidden) targetMenu.classList.remove('hidden');
-  }
-
-  document.addEventListener('click', () => {
-      document.querySelectorAll('.context-menu').forEach(m => m.classList.add('hidden'));
-  });
-
-  function deleteRoutineDirectly(id) {
-      appData.routines = appData.routines.filter(r => r.id !== id);
-      commitToStorage();
-      renderHomeView();
-  }
-
-  function initCreateRoutineWorkflow() {
-      editingRoutineId = null;
-      wizardRoutineData = { name: '', postures: [] };
-      currentWorkflowStep = 1;
-      setupWorkflowPanels();
-      showView('view-routine-manager');
-  }
-
-  function initEditRoutineWorkflow(id) {
-      const r = appData.routines.find(x => x.id === id);
-      if(!r) return;
-      editingRoutineId = id;
-      wizardRoutineData = JSON.parse(JSON.stringify(r));
-      currentWorkflowStep = 1;
-      setupWorkflowPanels();
-      showView('view-routine-manager');
-  }
-
-  function setupWorkflowPanels() {
-      document.querySelectorAll('.workflow-panel').forEach(p => p.classList.add('hidden'));
-      document.getElementById(`panel-step-${currentWorkflowStep}`).classList.remove('hidden');
-      
-      const btnForward = document.getElementById('btn-workflow-forward');
-      if(currentWorkflowStep === 3) {
-          btnForward.innerText = editingRoutineId ? '[UPDATE ROUTINE]' : '[SAVE ROUTINE]';
-      } else {
-          btnForward.innerText = '[NEXT]';
-      }
-
-      if(currentWorkflowStep === 1) renderStep1Lists();
-      if(currentWorkflowStep === 2) renderStep2Configs();
-      if(currentWorkflowStep === 3) {
-          document.getElementById('routine-name-input').value = wizardRoutineData.name;
-      }
-  }
-
-  function advanceWorkflowStep() {
-      if(currentWorkflowStep === 1) {
-          if(wizardRoutineData.postures.length === 0) {
-              alert("Veuillez sélectionner au moins une posture.");
-              return;
-          }
-          currentWorkflowStep = 2;
-          setupWorkflowPanels();
-      } else if(currentWorkflowStep === 2) {
-          currentWorkflowStep = 3;
-          setupWorkflowPanels();
-      } else if(currentWorkflowStep === 3) {
-          const finalName = document.getElementById('routine-name-input').value.trim();
-          if(!finalName) {
-              alert("Donnez un nom à votre routine.");
-              return;
-          }
-          wizardRoutineData.name = finalName;
-          
-          if(editingRoutineId) {
-              const idx = appData.routines.findIndex(r => r.id === editingRoutineId);
-              if(idx !== -1) appData.routines[idx] = wizardRoutineData;
-          } else {
-              wizardRoutineData.id = 'routine-' + Date.now();
-              appData.routines.push(wizardRoutineData);
-          }
-          commitToStorage();
-          showView('view-home');
-          renderHomeView();
-      }
-  }
-
-  function cancelRoutineWorkflow() {
-      showView('view-home');
-      renderHomeView();
-  }
-
-  function renderStep1Lists() {
-      const incList = document.getElementById('included-stretches-list');
-      incList.innerHTML = '';
-      if(wizardRoutineData.postures.length === 0) {
-          incList.innerHTML = `<p style="color:var(--text-muted); text-align:center; padding:20px 10px; font-size:13px;">Aucune posture incluse. Cliquez sur un élément ci-dessous.</p>`;
-      } else {
-          wizardRoutineData.postures.forEach((p, idx) => {
-              const row = document.createElement('div');
-              row.className = 'swipe-row-wrapper';
-              row.innerHTML = `
-                <div class="swipe-row-bg"><span>Delete</span></div>
-                <div class="swipe-row-fg" data-index="${idx}">
-                  <div><strong>${p.postureName}</strong> ${p.isDouble ? '<span class="badge-double">2S</span>' : ''}</div>
-                  <div style="font-size:12px; color:var(--text-muted);">${p.durationPerSide}s</div>
-                </div>
-              `;
-              incList.appendChild(row);
-          });
-          setupSwipeToDeleteGestures();
-      }
-
-      const availList = document.getElementById('available-stretches-list');
-      availList.innerHTML = '';
-      appData.globalCatalog.forEach(p => {
-          const item = document.createElement('div');
-          item.className = 'available-posture-item';
-          item.innerHTML = `
-            <div><b>${p.postureName}</b> ${p.isDouble ? '<span class="badge-double">Double</span>' : ''}</div>
-            <button style="background-color:var(--accent-primary); color:white; padding:6px 12px;" onclick="addPostureToWizard('${p.id}')">Add</button>
-          `;
-          availList.appendChild(item);
-      });
-  }
-
-  function addPostureToWizard(catalogId) {
-      const target = appData.globalCatalog.find(x => x.id === catalogId);
-      if(!target) return;
-      const copy = JSON.parse(JSON.stringify(target));
-      copy.instanceId = 'inst-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4);
-      wizardRoutineData.postures.push(copy);
-      renderStep1Lists();
-  }
-
-  function setupSwipeToDeleteGestures() {
-      document.querySelectorAll('.swipe-row-fg').forEach(row => {
-          let startX = 0;
-          let currentX = 0;
-          
-          row.addEventListener('touchstart', e => {
-              startX = e.touches[0].clientX;
-              row.style.transition = 'none';
-          }, { passive: true });
-
-          row.addEventListener('touchmove', e => {
-              currentX = e.touches[0].clientX;
-              let diff = currentX - startX;
-              if (diff < 0) {
-                  if (diff < -100) diff = -100;
-                  row.style.transform = `translateX(${diff}px)`;
-              }
-          }, { passive: true });
-
-          row.addEventListener('touchend', () => {
-              row.style.transition = 'transform 0.2s ease-out';
-              let diff = currentX - startX;
-              if (diff < -60) {
-                  row.style.transform = 'translateX(-100%)';
-                  setTimeout(() => {
-                      const idx = parseInt(row.getAttribute('data-index'));
-                      wizardRoutineData.postures.splice(idx, 1);
-                      renderStep1Lists();
-                  }, 200);
-              } else {
-                  row.style.transform = 'translateX(0)';
-              }
-          }, { passive: true });
-      });
-  }
-
-  function toggleDatabaseSubscreen(show) {
-      if(show) {
-          document.getElementById('panel-step-1').classList.add('hidden');
-          document.getElementById('panel-database-subscreen').classList.remove('hidden');
-          renderDatabaseCatalogList();
-      } else {
-          document.getElementById('panel-database-subscreen').classList.add('hidden');
-          document.getElementById('panel-step-1').classList.remove('hidden');
-          renderStep1Lists();
-      }
-  }
-
-  function renderDatabaseCatalogList() {
-      const list = document.getElementById('database-catalog-list');
-      list.innerHTML = '';
-      appData.globalCatalog.forEach(p => {
-          const row = document.createElement('div');
-          row.className = 'db-posture-row';
-          row.innerHTML = `
-            <div>
-              <strong>${p.postureName}</strong>
-              <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">Img: ${p.imageName} | Per Side: ${p.durationPerSide}s</div>
-            </div>
-            <button class="btn-del" onclick="deletePostureFromCatalog('${p.id}')">Delete</button>
-          `;
-          list.appendChild(row);
-      });
-  }
-
-  function deletePostureFromCatalog(catalogId) {
-      appData.globalCatalog = appData.globalCatalog.filter(x => x.id !== catalogId);
-      commitToStorage();
-      renderDatabaseCatalogList();
-  }
-
-  function goToBuilderFromDb() {
-      document.getElementById('posture-image').value = '';
-      document.getElementById('posture-name').value = '';
-      document.getElementById('posture-duration').value = '45';
-      document.getElementById('posture-double').checked = true;
-      document.getElementById('posture-prep').value = '0';
-      showView('view-builder');
-  }
-
-  function closeBuilderView() {
-      showView('view-routine-manager');
-      toggleDatabaseSubscreen(true);
-  }
-
-  function triggerLocalFileSelector() {
-      document.getElementById('hidden-posture-file-input').click();
-  }
-
-  function handleLocalFileSelection(event) {
-      const file = event.target.files[0];
-      if(!file) return;
-      document.getElementById('posture-image').value = file.name;
-      
-      let baseName = file.name.replace(/\.[^/.]+$/, "");
-      baseName = baseName.replace(/[_-]/g, " ");
-      document.getElementById('posture-name').value = baseName;
-  }
-
-  function savePostureToCatalog() {
-      const imgVal = document.getElementById('posture-image').value.trim();
-      const nameVal = document.getElementById('posture-name').value.trim();
-      const durVal = parseInt(document.getElementById('posture-duration').value) || 45;
-      const doubleVal = document.getElementById('posture-double').checked;
-      const prepVal = parseInt(document.getElementById('posture-prep').value) || 0;
-
-      if(!imgVal || !nameVal) {
-          alert("L'image et le nom sont requis.");
-          return;
-      }
-
-      const newId = 'posture-' + Date.now();
-      const newItem = {
-          id: newId,
-          postureName: nameVal,
-          imageName: imgVal,
-          durationPerSide: durVal,
-          isDouble: doubleVal,
-          halfwayBeep: true,
-          prepDelay: prepVal
+      const closeMenuHandler = () => {
+        targetMenu.classList.add('hidden');
+        document.removeEventListener('click', closeMenuHandler);
       };
+      document.addEventListener('click', closeMenuHandler);
+    }
 
-      appData.globalCatalog.push(newItem);
-      commitToStorage();
-      closeBuilderView();
-  }
+    function deleteRoutineDirectly(id) {
+      if(confirm("Are you sure you want to delete this routine?")) {
+        appData.routines = appData.routines.filter(r => r.id !== id);
+        commitToStorage();
+        renderHomeView();
+      }
+    }
 
-  function renderStep2Configs() {
-      const container = document.getElementById('config-lengths-list');
-      container.innerHTML = '';
-      
-      wizardRoutineData.postures.forEach((p, idx) => {
-          const item = document.createElement('div');
-          item.className = 'config-row';
-          item.innerHTML = `
-            <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
-              <div class="config-left">
-                <span class="drag-handle" data-index="${idx}">☰</span>
-                <div>
-                  <b style="text-transform:capitalize;">${p.postureName}</b>
-                  <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">Prep: ${p.prepDelay}s ${p.isDouble ? '| Double' : '| Single'}</div>
-                </div>
-              </div>
-              <div class="timer-controls">
-                <button class="btn-time-step" onclick="changeWizardPostureTime(${idx}, -5)">-</button>
-                <div class="local-duration-display" id="dur-disp-${idx}">${p.durationPerSide}s</div>
-                <button class="btn-time-step" onclick="changeWizardPostureTime(${idx}, 5)">+</button>
-              </div>
-            </div>
-          `;
-          container.appendChild(item);
-      });
-      setupStep2DragAndDropSorting();
-  }
-
-  function changeWizardPostureTime(idx, delta) {
-      let current = wizardRoutineData.postures[idx].durationPerSide;
-      current += delta;
-      if(current < 5) current = 5;
-      wizardRoutineData.postures[idx].durationPerSide = current;
-      document.getElementById(`dur-disp-${idx}`).innerText = current + 's';
-  }
-
-  function setupStep2DragAndDropSorting() {
-      const container = document.getElementById('config-lengths-list');
-      let draggedIdx = null;
-
-      container.querySelectorAll('.drag-handle').forEach(handle => {
-          handle.addEventListener('touchstart', e => {
-              draggedIdx = parseInt(handle.getAttribute('data-index'));
-              const row = handle.closest('.config-row');
-              row.style.opacity = '0.5';
-              row.style.background = '#27272a';
-          }, { passive: true });
-
-          handle.addEventListener('touchend', e => {
-              const row = handle.closest('.config-row');
-              row.style.opacity = '1';
-              row.style.background = 'transparent';
-              
-              const touch = e.changedTouches[0];
-              const targetEl = document.elementFromPoint(touch.clientX, touch.clientY);
-              const targetRow = targetEl ? targetEl.closest('.config-row') : null;
-              
-              if(targetRow) {
-                  const targetHandle = targetRow.querySelector('.drag-handle');
-                  const targetIdx = parseInt(targetHandle.getAttribute('data-index'));
-                  if(draggedIdx !== null && targetIdx !== draggedIdx) {
-                      const movedItem = wizardRoutineData.postures.splice(draggedIdx, 1)[0];
-                      wizardRoutineData.postures.splice(targetIdx, 0, movedItem);
-                      renderStep2Configs();
-                  }
-              }
-              draggedIdx = null;
-          });
-      });
-  }
-
-  function triggerImportClick() {
-      document.getElementById('import-file-input').click();
-  }
-
-  function exportData() {
-      const exportPackage = {
-          appVersion: "4.8a",
+function exportData() {
+      try {
+        // On crée un paquet global qui contient tes données ET tes réglages
+        const exportPackage = {
           appData: appData,
           appSettings: appSettings
-      };
-      const blob = new Blob([JSON.stringify(exportPackage, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `stretchapp_backup_${new Date().toISOString().slice(0,10)}.json`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-  }
+        };
 
-  function importData(event) {
+        const blob = new Blob([JSON.stringify(exportPackage, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'mes_postures.json';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        alert("Exportation réussie ! Fichier 'mes_postures.json' enregistré.");
+      } catch (e) {
+        alert("Erreur lors de l'exportation : " + e.message);
+      }
+    }
+
+    function triggerImportClick() { 
+      document.getElementById('import-file-input').click(); 
+    }
+
+function importData(event) {
       const file = event.target.files[0];
       if (!file) return;
       
       const reader = new FileReader();
       reader.onload = function(e) {
           try {
+              // 1. Lecture immédiate du JSON
               const parsed = JSON.parse(e.target.result);
+              
               let targetData = null;
               let targetSettings = null;
 
+              // 2. Logique de détection sécurisée
               if (parsed && parsed.appData === undefined && (parsed.globalCatalog || parsed.routines)) {
                   targetData = parsed;
               } else if (parsed && parsed.appData) {
@@ -1147,6 +855,7 @@
                   targetSettings = parsed.appSettings;
               }
 
+              // 3. Application des données
               if (targetData) {
                   if (targetData.globalCatalog) appData.globalCatalog = targetData.globalCatalog;
                   if (targetData.routines) appData.routines = targetData.routines;
@@ -1158,293 +867,530 @@
                   
                   commitToStorage();
                   renderHomeView();
-                  alert("Importation réussie ! Vos routines et vos réglages sont prêts.");
+                  alert("Importation réussie !");
               } else {
-                  alert("Format invalide : Le fichier JSON ne semble pas contenir de données StretchApp.");
+                  alert("Format invalide.");
               }
           } catch (err) { 
-              alert("Erreur de lecture du fichier JSON : " + err.message); 
+              alert("Erreur : " + err.message); 
           }
           event.target.value = '';
       };
       reader.readAsText(file);
   }
+    
+    function initCreateRoutineWorkflow() {
+      editingRoutineId = null; currentWorkflowStep = 1; wizardRoutineData = { name: '', postures: [] };
+      setupWorkflowUIPanels(); showView('view-routine-manager');
+    }
 
-  function startRoutinePlayback(id) {
-      const r = appData.routines.find(x => x.id === id);
-      if(!r || r.postures.length === 0) return;
-      activeRoutine = r;
-      activeStepIdx = 0;
-      activeSide = 'left';
-      showView('view-player');
-      loadActivePostureIndexSequence();
-  }
+    function initEditRoutineWorkflow(id) {
+      const routine = appData.routines.find(r => r.id === id);
+      if(!routine) return;
+      editingRoutineId = id; currentWorkflowStep = 1; wizardRoutineData = { name: routine.name, postures: JSON.parse(JSON.stringify(routine.postures)) };
+      setupWorkflowUIPanels(); showView('view-routine-manager');
+    }
 
-  function loadActivePostureIndexSequence() {
+    function setupWorkflowUIPanels() {
+      document.querySelectorAll('.workflow-panel').forEach(p => p.classList.add('hidden'));
+      document.getElementById(`panel-step-${currentWorkflowStep}`).classList.remove('hidden');
+      const nextBtn = document.getElementById('btn-workflow-forward');
+      nextBtn.innerText = currentWorkflowStep === 3 ? '[FINISH]' : '[NEXT]';
+      if (currentWorkflowStep === 1) renderStep1Lists();
+      else if (currentWorkflowStep === 2) renderStep2List();
+      else if (currentWorkflowStep === 3) document.getElementById('routine-name-input').value = wizardRoutineData.name;
+    }
+
+    function advanceWorkflowStep() {
+      if (currentWorkflowStep === 1) {
+        if(wizardRoutineData.postures.length === 0) return;
+        currentWorkflowStep = 2; setupWorkflowUIPanels();
+      } else if (currentWorkflowStep === 2) {
+        currentWorkflowStep = 3; setupWorkflowUIPanels();
+      } else if (currentWorkflowStep === 3) {
+        const nameInput = document.getElementById('routine-name-input').value.trim();
+        if(!nameInput) return;
+        wizardRoutineData.name = nameInput;
+        if (editingRoutineId) {
+          const index = appData.routines.findIndex(r => r.id === editingRoutineId);
+          if (index !== -1) appData.routines[index] = { id: editingRoutineId, ...wizardRoutineData };
+        } else {
+          appData.routines.push({ id: 'routine-' + Date.now(), ...wizardRoutineData });
+        }
+        commitToStorage(); cancelRoutineWorkflow();
+      }
+    }
+
+    function cancelRoutineWorkflow() { editingRoutineId = null; currentWorkflowStep = 1; renderHomeView(); showView('view-home'); }
+
+	function renderStep1Lists() {
+      const incContainer = document.getElementById('included-stretches-list'); incContainer.innerHTML = '';
+      wizardRoutineData.postures.forEach((posture, idx) => {
+              const wrapper = document.createElement('div');
+              wrapper.className = 'swipe-row-wrapper';
+              
+              // On va chercher l'image de la posture
+              const imgSrc = posture.imageName ? posture.imageName : '';
+              
+              wrapper.innerHTML = `
+                <div class="swipe-row-bg">Remove</div>
+                <div class="swipe-row-fg" data-index="${idx}" style="display: flex; align-items: center; gap: 12px; padding: 10px 16px;">
+                  <img src="${imgSrc}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px; background-color: #27272a;" onerror="this.style.visibility='hidden'">
+                  <span style="flex-grow: 1;">${posture.postureName}</span>
+                  <span>➔</span>
+                </div>
+              `;
+              setupSwipeGesturesOnRow(wrapper.querySelector('.swipe-row-fg'), idx);
+              incContainer.appendChild(wrapper);
+            });
+
+      const availContainer = document.getElementById('available-stretches-list'); availContainer.innerHTML = '';
+      appData.globalCatalog.forEach(posture => {
+        const item = document.createElement('div');
+        item.className = 'available-posture-item';
+        // Style pour aligner la miniature, le texte et le bouton + proprement
+        item.style = "display: flex; align-items: center; gap: 12px; padding: 10px 16px; border-bottom: 1px solid #27272a; transition: background 0.2s;";
+        
+        // POINT 4 : On va chercher la miniature (prend l'image locale ou affiche un carré propre)
+        const imgSrc = posture.imageName ? posture.imageName : '';
+        
+        item.innerHTML = `
+          <img src="${imgSrc}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px; background-color: #27272a;" onerror="this.style.visibility='hidden'">
+          <div style="flex-grow: 1;">
+            <span style="font-weight: 500; display: block;">${posture.postureName}</span>
+            <span id="badge-add-${posture.id}" style="font-size: 11px; color: var(--accent-success); font-weight: bold; display: none;">Ajouté !</span>
+          </div>
+          <span style="color:var(--accent-primary); font-weight:bold; font-size: 20px; padding: 4px;">+</span>
+        `;
+        
+        item.onclick = () => { 
+          // Ajout réel de la posture
+          wizardRoutineData.postures.push(JSON.parse(JSON.stringify(posture))); 
+          
+          // POINT 5 : Effet de retour visuel immédiat
+          item.style.backgroundColor = '#14321a'; // Flash vert sombre
+          const badge = document.getElementById(`badge-add-${posture.id}`);
+          if (badge) badge.style.display = 'block';
+          
+          // Petit délai avant de rafraîchir la liste complète pour laisser le temps de voir le flash
+          setTimeout(() => {
+            renderStep1Lists();
+          }, 400);
+        };
+        availContainer.appendChild(item);
+      });
+    }
+    
+    function setupSwipeGesturesOnRow(rowEl, index) {
+      let touchStartX = 0, currentX = 0;
+      rowEl.addEventListener('touchstart', (e) => { touchStartX = e.touches[0].clientX; rowEl.style.transition = 'none'; }, {passive: true});
+      rowEl.addEventListener('touchmove', (e) => { currentX = e.touches[0].clientX - touchStartX; if (currentX < 0) rowEl.style.transform = `translateX(${currentX}px)`; }, {passive: true});
+      rowEl.addEventListener('touchend', () => {
+        rowEl.style.transition = 'transform 0.2s ease-out';
+        if (currentX < -(window.innerWidth * 0.3)) {
+          rowEl.style.transform = 'translateX(-100%)';
+          setTimeout(() => { wizardRoutineData.postures.splice(index, 1); renderStep1Lists(); }, 200);
+        } else { rowEl.style.transform = 'translateX(0px)'; }
+        currentX = 0;
+      }, {passive: true});
+    }
+
+    function toggleDatabaseSubscreen(show) {
+      document.getElementById('panel-database-subscreen').classList.toggle('hidden', !show);
+      document.getElementById('panel-step-1').classList.toggle('hidden', show);
+      document.getElementById('manager-nav-bar').classList.toggle('hidden', show);
+      if (show) renderDatabaseCatalog(); else renderStep1Lists();
+    }
+
+    function renderDatabaseCatalog() {
+      const container = document.getElementById('database-catalog-list'); container.innerHTML = '';
+      appData.globalCatalog.forEach(posture => {
+        const row = document.createElement('div');
+        row.className = 'db-posture-row';
+        row.id = `db-row-${posture.id}`;
+        row.innerHTML = `<span>${posture.postureName}</span><button class="btn-del" onclick="showInlineConfirm('${posture.id}')">[DEL]</button>`;
+        container.appendChild(row);
+      });
+    }
+
+    function showInlineConfirm(id) {
+      const row = document.getElementById(`db-row-${id}`);
+      if(!row) return;
+      row.style.backgroundColor = '#401010';
+      row.innerHTML = `
+        <span style="color: #ff9999; font-weight: bold; font-size:14px;">Delete this posture?</span>
+        <div style="display:flex; gap:8px;">
+          <button onclick="executeCatalogPurge('${id}')" style="background: var(--accent-danger); color: white; border: none; padding: 6px 12px; border-radius: 4px; font-weight:bold;">Y</button>
+          <button onclick="renderDatabaseCatalog()" style="background: #555; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-weight:bold;">N</button>
+        </div>
+      `;
+    }
+
+    function executeCatalogPurge(id) {
+      appData.globalCatalog = appData.globalCatalog.filter(p => p.id !== id);
+      appData.routines.forEach(r => r.postures = r.postures.filter(p => p.id !== id));
+      commitToStorage(); renderDatabaseCatalog();
+    }
+
+    function goToBuilderFromDb() { showView('view-builder'); }
+    function closeBuilderView() { showView('view-routine-manager'); toggleDatabaseSubscreen(true); }
+
+    function savePostureToCatalog() {
+      const name = document.getElementById('posture-name').value.trim();
+      const img = document.getElementById('posture-image').value.trim();
+      const duration = parseInt(document.getElementById('posture-duration').value);
+      if (!name || !img) return;
+      appData.globalCatalog.push({
+        id: 'posture-' + Date.now(), postureName: name, imageName: img,
+        durationPerSide: isNaN(duration) ? 45 : duration,
+        isDouble: document.getElementById('posture-double').checked,
+        halfwayBeep: false, 
+        prepDelay: parseInt(document.getElementById('posture-prep').value) || 0
+      });
+      commitToStorage(); document.getElementById('posture-name').value = ''; document.getElementById('posture-image').value = '';
+      closeBuilderView();
+    }
+
+	function triggerLocalFileSelector() {
+	  document.getElementById('hidden-posture-file-input').click();
+	}
+
+	function handleLocalFileSelection(event) {
+	  const file = event.target.files[0];
+	  if (!file) return;
+
+	  const fullFileName = file.name;
+	  document.getElementById('posture-image').value = fullFileName;
+
+	  const fileNameWithoutExtension = fullFileName.substring(0, fullFileName.lastIndexOf('.')) || fullFileName;
+	  document.getElementById('posture-name').value = fileNameWithoutExtension;
+  
+	  event.target.value = '';
+	}
+
+	function renderStep2List() {
+      const container = document.getElementById('config-lengths-list'); container.innerHTML = '';
+      wizardRoutineData.postures.forEach((posture, idx) => {
+        const row = document.createElement('div'); row.className = 'config-row'; row.setAttribute('draggable', 'true'); row.setAttribute('data-index', idx);
+        
+        const isChecked = posture.halfwayBeep ? 'checked' : '';
+        const doubleBadge = posture.isDouble ? '<span class="badge-double">x2</span>' : '';
+        
+        // Définition de l'image de la posture pour l'affichage de la miniature
+        const imgSrc = posture.imageName ? posture.imageName : '';
+
+        row.innerHTML = `
+          <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 12px;">
+            <div class="config-left" style="display: flex; align-items: center; gap: 12px;">
+              <div class="drag-handle">⋮⋮</div>
+              <img src="${imgSrc}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px; background-color: #27272a;" onerror="this.style.visibility='hidden'">
+              <div>${posture.postureName} ${doubleBadge}</div>
+            </div>
+            <div class="timer-controls">
+              <button class="btn-time-step" onclick="adjustLocalTime(${idx}, -5)">-</button>
+              <div class="local-duration-display">${posture.durationPerSide}s</div>
+              <button class="btn-time-step" onclick="adjustLocalTime(${idx}, 5)">+</button>
+            </div>
+          </div>
+          <div style="display: flex; align-items: center; font-size: 13px; color: var(--text-muted);">
+            <label style="display: flex; align-items: center; cursor: pointer;">
+              <input type="checkbox" onchange="updateStepHalfwayBeep(${idx}, this.checked)" ${isChecked} style="margin-right: 8px; width: 16px; height: 16px; margin-bottom: 0;">
+              Halfway Beep for this routine
+            </label>
+          </div>`;
+        setupDragEvents(row); container.appendChild(row);
+      });
+    }
+
+    function updateStepHalfwayBeep(idx, isChecked) {
+      wizardRoutineData.postures[idx].halfwayBeep = isChecked;
+    }
+
+    function adjustLocalTime(idx, amt) {
+      wizardRoutineData.postures[idx].durationPerSide = Math.max(5, wizardRoutineData.postures[idx].durationPerSide + amt);
+      renderStep2List();
+    }
+
+    let dragSrcEl = null;
+    function setupDragEvents(el) {
+      el.addEventListener('dragstart', (e) => { dragSrcEl = el; e.dataTransfer.effectAllowed = 'move'; el.style.opacity = '0.4'; });
+      el.addEventListener('dragover', (e) => { if (e.preventDefault) e.preventDefault(); return false; });
+      el.addEventListener('drop', (e) => {
+        e.stopPropagation();
+        if (dragSrcEl !== el) {
+          const sIdx = parseInt(dragSrcEl.getAttribute('data-index')), tIdx = parseInt(el.getAttribute('data-index'));
+          const tmp = wizardRoutineData.postures[sIdx]; wizardRoutineData.postures.splice(sIdx, 1); wizardRoutineData.postures.splice(tIdx, 0, tmp);
+          renderStep2List();
+        }
+        return false;
+      });
+      el.addEventListener('dragend', () => el.style.opacity = '1');
+    }
+
+    /* --- VUE D: AUDIO PLAYBACK ENGINE --- */
+    function startRoutinePlayback(routineId) {
+      activeRoutine = appData.routines.find(r => r.id === routineId);
+      if(!activeRoutine) return;
+      startMicListening();
+      activeStepIdx = 0; activeSide = 'left'; showView('view-player'); executeGlobalInitialCountdown();
+    }
+
+    function clearActiveAsynchronousMemoryInstances() {
+      if (timerIntervalId) { clearInterval(timerIntervalId); timerIntervalId = null; }
+      if (countdownTimeoutId) { clearTimeout(countdownTimeoutId); countdownTimeoutId = null; }
+      if (window.speechSynthesis) window.speechSynthesis.cancel();
+    }
+
+    function executeGlobalInitialCountdown() {
+      clearActiveAsynchronousMemoryInstances(); activeTimerState = 3;
+      document.getElementById('player-posture-title').innerText = "Get Ready!";
+      document.getElementById('player-side-indicator').innerText = "";
+      document.getElementById('player-status-text').innerText = "Starting Routine...";
+      let startCount = 3; document.getElementById('player-timer-digits').innerText = startCount;
+      executeSystemOscillatorBeep(880, 0.15);
+      timerIntervalId = setInterval(() => {
+        startCount--;
+        if (startCount > 0) { document.getElementById('player-timer-digits').innerText = startCount; executeSystemOscillatorBeep(880, 0.15); }
+        else if (startCount === 0) { document.getElementById('player-timer-digits').innerText = "Go!"; executeSystemOscillatorBeep(1200, 0.4); }
+        else { clearInterval(timerIntervalId); timerIntervalId = null; loadActivePostureIndexSequence(); }
+      }, 1000);
+    }
+
+    function loadActivePostureIndexSequence() {
       clearActiveAsynchronousMemoryInstances();
-      const currentPosture = activeRoutine.postures[activeStepIdx];
-      
+      if (activeStepIdx >= activeRoutine.postures.length) { alert("Routine finished!"); exitPlaybackSession(); return; }
+      const p = activeRoutine.postures[activeStepIdx]; countdownRemaining = p.durationPerSide;
       document.getElementById('player-progress').innerText = `${activeStepIdx + 1} of ${activeRoutine.postures.length}`;
-      document.getElementById('player-posture-title').innerText = currentPosture.postureName;
+      document.getElementById('player-posture-title').innerText = p.postureName;
+      document.getElementById('player-side-indicator').innerText = p.isDouble ? `${activeSide} Side` : "Single Side";
+      document.getElementById('player-up-next').innerText = (activeStepIdx + 1 < activeRoutine.postures.length) ? activeRoutine.postures[activeStepIdx + 1].postureName : "Done!";
       
-      const nextPosture = activeRoutine.postures[activeStepIdx + 1];
-      if(nextPosture) {
-          document.getElementById('player-up-next').innerText = nextPosture.postureName;
+      const imageBox = document.getElementById('player-image-display');
+      if (p.imageName && p.imageName.trim() !== "") {
+        imageBox.innerHTML = `<img src="${p.imageName}" alt="${p.postureName}">`;
       } else {
-          document.getElementById('player-up-next').innerText = 'Done!';
+        imageBox.innerHTML = `<div style="color:var(--text-muted); font-size:14px;">No Image</div>`;
       }
 
-      const imgFrame = document.getElementById('player-image-display');
-      imgFrame.innerHTML = '';
-      if(currentPosture.imageName) {
-          const img = document.createElement('img');
-          img.src = currentPosture.imageName;
-          img.alt = currentPosture.postureName;
-          imgFrame.appendChild(img);
+      activeTimerState = 1;
+      document.getElementById('player-status-text').innerText = "Awaiting Vocal Command (Say START or GO)";
+      document.getElementById('player-timer-digits').innerText = countdownRemaining;
+      document.getElementById('btn-player-toggle').innerText = "▶️";
+	  startMicListening();
+      // On dit le nom de la posture uniquement au début (côté gauche ou posture simple)
+      if (activeSide === 'left') {
+        executeTextToSpeechVocalNotification(p.postureName);
       }
+    }  
+	function transitionToActiveTimerState2() {
+      clearActiveAsynchronousMemoryInstances(); activeTimerState = 2;
+      stopMicListening();
 
-      if(currentPosture.prepDelay > 0) {
-          activeTimerState = 2;
-          countdownRemaining = currentPosture.prepDelay;
-          document.getElementById('player-side-indicator').innerText = 'PREPARATION';
-          document.getElementById('player-status-text').innerText = 'Get into Position';
-          triggerBeepSoundAlert('prep_start');
-      } else {
-          activeTimerState = 3;
-          countdownRemaining = currentPosture.durationPerSide;
-          document.getElementById('player-side-indicator').innerText = currentPosture.isDouble ? activeSide.toUpperCase() + ' SIDE' : 'SINGLE SIDE';
-          document.getElementById('player-status-text').innerText = 'Awaiting Vocal Command';
-      }
+      // Double bip aigu pour annoncer le départ du chrono !
+      executeSystemOscillatorBeep(900, 0.1);
+      setTimeout(() => { executeSystemOscillatorBeep(900, 0.15); }, 130);
 
-      renderPlayerDigitsDisplay();
-      if(activeTimerState === 3) {
-          startSpeechRecognitionPulse();
-      } else if(activeTimerState === 2) {
-          executeClockCountdownExecution();
-      }
-  }
-
-  function renderPlayerDigitsDisplay() {
-      const s = countdownRemaining % 60;
-      document.getElementById('player-timer-digits').innerText = s < 10 ? '0' + s : s;
-  }
-
-  function executeClockCountdownExecution() {
-      clearInterval(timerIntervalId);
-      document.getElementById('btn-player-toggle').innerText = '⏸️';
+      document.getElementById('player-status-text').innerText = "Timer Running";
+      document.getElementById('btn-player-toggle').innerText = "⏸️";
+      let nextNotificationDispatched = false;
+      const currentPosture = activeRoutine.postures[activeStepIdx];
+      const originalSideDuration = currentPosture.durationPerSide;
       
       timerIntervalId = setInterval(() => {
-          if(countdownRemaining > 1) {
-              countdownRemaining--;
-              renderPlayerDigitsDisplay();
-              
-              const currentPosture = activeRoutine.postures[activeStepIdx];
-              if(activeTimerState === 3 && currentPosture.halfwayBeep && countdownRemaining === Math.floor(currentPosture.durationPerSide / 2)) {
-                  triggerBeepSoundAlert('halfway');
-              }
-          } else {
-              clearInterval(timerIntervalId);
-              handleClockTimerExhaustionSegment();
-          }
+        countdownRemaining--; document.getElementById('player-timer-digits').innerText = countdownRemaining;
+        
+        if (currentPosture.halfwayBeep && countdownRemaining === Math.floor(originalSideDuration / 2)) { executeSystemOscillatorBeep(600, 0.3); }
+        if (countdownRemaining === 10 && !nextNotificationDispatched) {
+          nextNotificationDispatched = true;
+          executeTextToSpeechVocalNotification(currentPosture.isDouble && activeSide === 'left' ? "Switch side coming up" : (activeStepIdx + 1 < activeRoutine.postures.length ? "Up next: " + activeRoutine.postures[activeStepIdx + 1].postureName : "Done!"));
+        }
+        if (countdownRemaining <= 3 && countdownRemaining > 0) { executeSystemOscillatorBeep(440, 0.1); }
+        if (countdownRemaining <= 0) { clearInterval(timerIntervalId); timerIntervalId = null; executeSystemOscillatorBeep(1000, 0.5); evaluatePostStepNavigationPaths(); }
       }, 1000);
-  }
+    }
 
-  function handleClockTimerExhaustionSegment() {
-      if(activeTimerState === 2) {
-          activeTimerState = 3;
-          const currentPosture = activeRoutine.postures[activeStepIdx];
-          countdownRemaining = currentPosture.durationPerSide;
-          document.getElementById('player-side-indicator').innerText = currentPosture.isDouble ? activeSide.toUpperCase() + ' SIDE' : 'SINGLE SIDE';
-          document.getElementById('player-status-text').innerText = 'Awaiting Vocal Command';
-          renderPlayerDigitsDisplay();
-          startSpeechRecognitionPulse();
-      } else if(activeTimerState === 3) {
-          triggerBeepSoundAlert('end');
-          playerActionNext();
-      }
-  }
-
-  function playerActionToggle() {
-      if(timerIntervalId) {
-          clearInterval(timerIntervalId);
-          timerIntervalId = null;
-          stopMicListening();
-          document.getElementById('btn-player-toggle').innerText = '▶️';
-          document.getElementById('player-status-text').innerText = 'Paused';
-      } else {
-          if(activeTimerState === 3 && document.getElementById('player-status-text').innerText === 'Awaiting Vocal Command') {
-              document.getElementById('player-status-text').innerText = 'Running (Manual Overrule)';
-          }
-          executeClockCountdownExecution();
-      }
-  }
-
-  function playerActionNext() {
-      clearActiveAsynchronousMemoryInstances();
-      const currentPosture = activeRoutine.postures[activeStepIdx];
-      
-      if(currentPosture.isDouble && activeSide === 'left') {
-          activeSide = 'right';
-          loadActivePostureIndexSequence();
-      } else if(activeStepIdx < activeRoutine.postures.length - 1) {
-          activeStepIdx++;
-          activeSide = 'left';
-          loadActivePostureIndexSequence();
-      } else {
-          exitPlaybackSession();
-      }
-  }
-
-  function playerActionBack() {
-      clearActiveAsynchronousMemoryInstances();
-      if (activeSide === 'right') {
-          activeSide = 'left';
-      } else if (activeStepIdx > 0) {
-          activeStepIdx--;
-          activeSide = activeRoutine.postures[activeStepIdx].isDouble ? 'right' : 'left';
-      }
-      loadActivePostureIndexSequence();
-  }
-
-  function exitPlaybackSession() {
-      clearActiveAsynchronousMemoryInstances();
-      activeRoutine = null;
+    function startManualTriggerSequenceWithPrepDelay() {
+      clearActiveAsynchronousMemoryInstances(); activeTimerState = 3;
       stopMicListening();
-      renderHomeView();
-      showView('view-home');
-  }
+      let totalPrep = 3 + (activeRoutine.postures[activeStepIdx].prepDelay || 0);
+      document.getElementById('player-status-text').innerText = `Preparing (${totalPrep}s)`;
+      document.getElementById('player-timer-digits').innerText = totalPrep;
+      document.getElementById('btn-player-toggle').innerText = "⏳";
+      timerIntervalId = setInterval(() => {
+        totalPrep--;
+        if(totalPrep > 0) { document.getElementById('player-timer-digits').innerText = totalPrep; document.getElementById('player-status-text').innerText = `Preparing (${totalPrep}s)`; }
+        else { clearInterval(timerIntervalId); timerIntervalId = null; transitionToActiveTimerState2(); }
+      }, 1000);
+    }
 
-  function duplicateRoutine(routineId) {
+    function evaluatePostStepNavigationPaths() {
+      const p = activeRoutine.postures[activeStepIdx];
+      if (p.isDouble && activeSide === 'left') { activeSide = 'right'; executeTextToSpeechVocalNotification("Switch side"); countdownTimeoutId = setTimeout(() => { loadActivePostureIndexSequence(); }, 1500); }
+      else { activeSide = 'left'; activeStepIdx++; loadActivePostureIndexSequence(); }
+    }
+
+    /* --- SYSTÈME DE CAPTURE VOCALE LOCALE (ANTI BLIP-BLOUP) --- */
+    let audioContextInstance = null;
+    let micStreamInstance = null;
+    let localAnalyser = null;
+
+    async function setupNativeSpeechRecognition() {
+      console.log("Moteur local initialisé (Silencieux)");
+    }
+
+async function startMicListening() {
+      if (activeTimerState !== 1) return;
+      if (micStreamInstance) return; 
+
+      try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContext) return;
+
+        micStreamInstance = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+        audioContextInstance = new AudioContext();
+        
+        const source = audioContextInstance.createMediaStreamSource(micStreamInstance);
+        localAnalyser = audioContextInstance.createAnalyser();
+        localAnalyser.fftSize = 256;
+        source.connect(localAnalyser);
+        
+        const bufferLength = localAnalyser.frequencyBinCount;
+        const dataArray = new Uint8Array(bufferLength);
+        
+        const checkAudioLocale = () => {
+          if (activeTimerState !== 1 || !micStreamInstance) {
+            stopMicListening();
+            return;
+          }
+          
+          localAnalyser.getByteFrequencyData(dataArray);
+          
+          let volumeTotal = 0;
+          for (let i = 0; i < bufferLength; i++) {
+            volumeTotal += dataArray[i];
+          }
+          let volumeMoyen = volumeTotal / bufferLength;
+
+          // Utilise maintenant le seuil choisi avec le slider (ex: 60% ou 70%)
+          if (volumeMoyen > appSettings.micThreshold) { 
+            stopMicListening();
+            transitionToActiveTimerState2();
+            return;
+          }
+          
+          requestAnimationFrame(checkAudioLocale);
+        };
+        
+        requestAnimationFrame(checkAudioLocale);
+        
+      } catch (e) {
+        console.warn("Impossible d'activer le micro local :", e);
+      }
+    }
+          
+          requestAnimationFrame(checkAudioLocale);
+        };
+        
+        requestAnimationFrame(checkAudioLocale);
+        
+      } catch (e) {
+        console.warn("Impossible d'activer le micro local :", e);
+      }
+    }
+
+    function stopMicListening() {
+      if (micStreamInstance) {
+        micStreamInstance.getTracks().forEach(track => track.stop());
+        micStreamInstance = null;
+      }
+      if (audioContextInstance) {
+        try { audioContextInstance.close(); } catch(e){}
+        audioContextInstance = null;
+      }
+      localAnalyser = null;
+    }
+
+function executeTextToSpeechVocalNotification(textString) {
+      try { 
+        if (window.speechSynthesis) { 
+          window.speechSynthesis.cancel(); // Évite que les phrases se chevauchent et coupent
+          const u = new SpeechSynthesisUtterance(textString); 
+          u.lang = 'en-US'; 
+          u.volume = 1.0; // POINT 7 : Force le volume de la voix au maximum
+          window.speechSynthesis.speak(u); 
+        } 
+      } catch(e){}
+    }
+    
+function executeSystemOscillatorBeep(freq, dur) {
+      try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext; if (!AudioContext) return;
+        const ctx = new AudioContext(); const osc = ctx.createOscillator(); const gain = ctx.createGain();
+        osc.type = 'sine'; 
+        osc.frequency.setValueAtTime(freq, ctx.currentTime); 
+        
+        // Calcule le volume de façon dynamique (ex: 80% devient 0.8)
+        const targetVolume = appSettings.beepVolume / 100;
+        gain.gain.setValueAtTime(targetVolume, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + dur); 
+        
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.start(); osc.stop(ctx.currentTime + dur);
+      } catch(e){}
+    }
+
+    function playerActionToggle() {
+      if (activeTimerState === 1) startManualTriggerSequenceWithPrepDelay();
+      else if (activeTimerState === 2) { 
+        clearActiveAsynchronousMemoryInstances(); 
+        activeTimerState = 1; 
+        document.getElementById('player-status-text').innerText = "Paused - Awaiting Trigger (Say START or GO)"; 
+        document.getElementById('btn-player-toggle').innerText = "▶️"; 
+        startMicListening(); 
+      }
+    }
+
+    function playerActionNext() {
+      clearActiveAsynchronousMemoryInstances();
+      if (activeRoutine.postures[activeStepIdx].isDouble && activeSide === 'left') { activeSide = 'right'; } else { activeSide = 'left'; activeStepIdx++; }
+      loadActivePostureIndexSequence();
+    }
+
+    function playerActionBack() {
+      clearActiveAsynchronousMemoryInstances();
+      if (activeSide === 'right') { activeSide = 'left'; }
+      else if (activeStepIdx > 0) { activeStepIdx--; activeSide = activeRoutine.postures[activeStepIdx].isDouble ? 'right' : 'left'; }
+      loadActivePostureIndexSequence();
+    }
+
+    function exitPlaybackSession() { 
+      clearActiveAsynchronousMemoryInstances(); 
+      activeRoutine = null; 
+      stopMicListening();
+      renderHomeView(); 
+      showView('view-home'); 
+    }
+	function duplicateRoutine(routineId) {
+      // 1. Trouver la routine originale
       const originalRoutine = appData.routines.find(r => r.id === routineId);
       if (!originalRoutine) return;
     
+      // 2. Créer une copie parfaite de la routine
       const copiedRoutine = JSON.parse(JSON.stringify(originalRoutine));
+      
+      // 3. Lui donner un nouvel ID unique et changer son nom
       copiedRoutine.id = 'routine-' + Date.now();
       copiedRoutine.name = originalRoutine.name + " (Copie)";
     
+      // 4. L'ajouter au stockage et rafraîchir l'écran
       appData.routines.push(copiedRoutine);
       commitToStorage();
-      exitPlaybackSession();
-  }
-
-  function clearActiveAsynchronousMemoryInstances() {
-      clearInterval(timerIntervalId);
-      timerIntervalId = null;
-      clearTimeout(countdownTimeoutId);
-      countdownTimeoutId = null;
-  }
-
-  // ==========================================
-  // SYSTÈME AUDIO AVANCÉ (BIPS SYNTHÉTIQUES)
-  // ==========================================
-  function triggerBeepSoundAlert(type) {
-      try {
-          const volumeGain = appSettings.beepVolume / 100;
-          const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-          
-          if(type === 'prep_start') {
-              playToneSequence(audioCtx, [600], 0.1, volumeGain);
-          } else if(type === 'halfway') {
-              playToneSequence(audioCtx, [523.25, 659.25], 0.12, volumeGain);
-          } else if(type === 'end') {
-              playToneSequence(audioCtx, [880, 880, 1200], 0.08, volumeGain);
-          }
-      } catch(e) {
-          console.warn("Audio Context failure");
-      }
-  }
-
-  function playToneSequence(ctx, freqs, duration, volume) {
-      let timeOffset = ctx.currentTime;
-      freqs.forEach(f => {
-          const osc = ctx.createOscillator();
-          const gainNode = ctx.createGain();
-          osc.type = 'sine';
-          osc.frequency.setValueAtTime(f, timeOffset);
-          gainNode.gain.setValueAtTime(volume, timeOffset);
-          
-          osc.connect(gainNode);
-          gainNode.connect(ctx.destination);
-          
-          osc.start(timeOffset);
-          osc.stop(timeOffset + duration);
-          timeOffset += duration + 0.03;
-      });
-  }
-
-  // ==========================================
-  // ANALYSEUR DE SEUIL MICRO (FALLBACK)
-  // ==========================================
-  let localAudioStream = null;
-  let audioProcessorContext = null;
-
-  function setupNativeSpeechRecognition() {
-      console.log("Audio pipeline hardware ready.");
-  }
-
-  function startSpeechRecognitionPulse() {
-      stopMicListening();
       
-      const statusBanner = document.getElementById('player-status-text');
-      statusBanner.innerText = "Listening...";
-      statusBanner.style.color = "#16a34a";
-
-      navigator.mediaDevices.getUserMedia({ audio: true, video: false })
-      .then(stream => {
-          localAudioStream = stream;
-          audioProcessorContext = new (window.AudioContext || window.webkitAudioContext)();
-          const source = audioProcessorContext.createMediaStreamSource(stream);
-          const analyser = audioProcessorContext.createAnalyser();
-          analyser.fftSize = 256;
-          source.connect(analyser);
-
-          const bufferLength = analyser.frequencyBinCount;
-          const dataArray = new Uint8Array(bufferLength);
-
-          function checkVolumeLevel() {
-              if (!localAudioStream) return;
-              analyser.getByteFrequencyData(dataArray);
-              
-              let total = 0;
-              for (let i = 0; i < bufferLength; i++) {
-                  total += dataArray[i];
-              }
-              let average = total / bufferLength;
-              let currentPercentage = (average / 128) * 100;
-
-              // Comparaison avec la valeur dynamique configurée par l'utilisateur
-              if (currentPercentage > appSettings.micThreshold) {
-                  stopMicListening();
-                  statusBanner.innerText = "Triggered!";
-                  statusBanner.style.color = "var(--text-main)";
-                  executeClockCountdownExecution();
-              } else {
-                  countdownTimeoutId = setTimeout(checkVolumeLevel, 50);
-              }
-          }
-          checkVolumeLevel();
-      })
-      .catch(err => {
-          statusBanner.innerText = "Mic Error / Denied";
-          statusBanner.style.color = "var(--accent-danger)";
-      });
-  }
-
-  function stopMicListening() {
-      clearTimeout(countdownTimeoutId);
-      countdownTimeoutId = null;
-      
-      if (localAudioStream) {
-          localAudioStream.getTracks().forEach(track => track.stop());
-          localAudioStream = null;
+      // Rafraîchir l'affichage (Utilise renderHomeView comme dans ton exitPlaybackSession)
+      if (typeof renderHomeView === 'function') {
+        renderHomeView();
       }
-      if (audioProcessorContext && audioProcessorContext.state !== 'closed') {
-          audioProcessorContext.close();
-          audioProcessorContext = null;
-      }
-      const statusBanner = document.getElementById('player-status-text');
-      if (statusBanner) statusBanner.style.color = "var(--text-muted)";
-  }
+    }
   </script>
 </body>
 </html>
