@@ -498,34 +498,33 @@
         <input type="file" id="import-file-input" class="hidden" accept=".json" onchange="importData(event)">
       </div>
 
-      <div class="app-version">v4.8h</div>
-
-</section id="page-global-settings" class="app-view hidden">
-    <div class="header" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px;">
-      <h1 style="font-size: 24px; font-weight: 700; letter-spacing: -0.5px;">Settings</h1>
-    </div>
-
-    <div style="background: var(--bg-card); padding: 16px; border-radius: 12px; margin-bottom: 16px;">
-      <label style="display: block; font-weight: 600; margin-bottom: 6px; font-size: 15px;">🎤 Mic Threshold (Sensitivity)</label>
-      <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px; line-height: 1.4;">Lower % = more sensitive. Increase this value if your timer triggers automatically due to floor friction or ambient noise.</p>
-      <div style="display: flex; align-items: center; gap: 12px;">
-        <input type="range" id="slider-mic-threshold" min="5" max="95" step="5" style="flex-grow: 1; height: 6px; border-radius: 3px; accent-color: var(--accent-primary);" oninput="updateMicSettingsLive(this.value)">
-        <span id="display-mic-threshold" style="font-weight: bold; width: 45px; text-align: right; font-variant-numeric: tabular-nums;">45%</span>
+      <div class="app-version">v4.8g</div>
+    </section> <section id="page-global-settings" class="app-view hidden">
+      <div class="header" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px;">
+        <h1 style="font-size: 24px; font-weight: 700; letter-spacing: -0.5px;">Settings</h1>
       </div>
-    </div>
 
-    <div style="background: var(--bg-card); padding: 16px; border-radius: 12px; margin-bottom: 24px;">
-      <label style="display: block; font-weight: 600; margin-bottom: 6px; font-size: 15px;">🔊 Beep Volume</label>
-      <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px; line-height: 1.4;">Adjusts the volume for all routine beeps (start, halfway, and end).</p>
-      <div style="display: flex; align-items: center; gap: 12px;">
-        <input type="range" id="slider-beep-volume" min="10" max="100" step="5" style="flex-grow: 1; height: 6px; border-radius: 3px; accent-color: var(--accent-primary);" oninput="updateBeepSettingsLive(this.value)">
-        <span id="display-beep-volume" style="font-weight: bold; width: 45px; text-align: right; font-variant-numeric: tabular-nums;">80%</span>
+      <div style="background: var(--bg-card); padding: 16px; border-radius: 12px; margin-bottom: 16px;">
+        <label style="display: block; font-weight: 600; margin-bottom: 6px; font-size: 15px;">🎤 Mic Threshold (Sensitivity)</label>
+        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px; line-height: 1.4;">Lower % = more sensitive. Increase this value if your timer triggers automatically due to floor friction or ambient noise.</p>
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <input type="range" id="slider-mic-threshold" min="5" max="95" step="5" style="flex-grow: 1; height: 6px; border-radius: 3px; accent-color: var(--accent-primary);" oninput="updateMicSettingsLive(this.value)">
+          <span id="display-mic-threshold" style="font-weight: bold; width: 45px; text-align: right; font-variant-numeric: tabular-nums;">45%</span>
+        </div>
       </div>
-      <button onclick="testBeepVolume()" style="margin-top: 14px; width: 100%; padding: 10px; background: #27272a; border: 1px solid #3f3f46; color: #fff; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer;">🎵 Test Volume</button>
-    </div>
 
-    <button onclick="hideSettingsPage()" class="btn-db-trigger" style="width: 100%; padding: 14px; background: var(--accent-primary); color: white; border: none; border-radius: 10px; font-weight: bold; font-size: 16px; cursor: pointer; text-align: center;">Back to Home</button>
-  </section>
+      <div style="background: var(--bg-card); padding: 16px; border-radius: 12px; margin-bottom: 24px;">
+        <label style="display: block; font-weight: 600; margin-bottom: 6px; font-size: 15px;">🔊 Beep Volume</label>
+        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px; line-height: 1.4;">Adjusts the volume for all routine beeps (start, halfway, and end).</p>
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <input type="range" id="slider-beep-volume" min="10" max="100" step="5" style="flex-grow: 1; height: 6px; border-radius: 3px; accent-color: var(--accent-primary);" oninput="updateBeepSettingsLive(this.value)">
+          <span id="display-beep-volume" style="font-weight: bold; width: 45px; text-align: right; font-variant-numeric: tabular-nums;">80%</span>
+        </div>
+        <button onclick="testBeepVolume()" style="margin-top: 14px; width: 100%; padding: 10px; background: #27272a; border: 1px solid #3f3f46; color: #fff; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer;">🎵 Test Volume</button>
+      </div>
+
+      <button onclick="hideSettingsPage()" class="btn-db-trigger" style="width: 100%; padding: 14px; background: var(--accent-primary); color: white; border: none; border-radius: 10px; font-weight: bold; font-size: 16px; cursor: pointer; text-align: center;">Back to Home</button>
+    </section>
     
     <section id="view-routine-manager" class="app-view hidden">
       <div id="panel-step-1" class="workflow-panel">
