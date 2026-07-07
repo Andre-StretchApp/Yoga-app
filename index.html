@@ -312,32 +312,6 @@
       padding: 0 20px;
     }
 
-    /* --- VUE C: BUILDER VIEW STYLE --- */
-    .checkbox-group {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 16px;
-    }
-
-    .checkbox-group input {
-      width: auto;
-      margin-bottom: 0;
-    }
-
-    .form-actions {
-      display: flex;
-      gap: 12px;
-      margin-top: 24px;
-    }
-
-    .btn-save-catalog {
-      background-color: var(--accent-success);
-      color: white;
-      flex: 1;
-      padding: 14px;
-    }
-
     /* --- VUE D: PLAYER VIEW STYLE --- */
     .player-header {
       display: flex;
@@ -498,7 +472,7 @@
         <input type="file" id="import-file-input" class="hidden" accept=".json" onchange="importData(event)">
       </div>
 
-      <div class="app-version">v5.0</div>
+      <div class="app-version">v5.1</div>
     </section>
 
     <section id="page-global-settings" class="app-view hidden">
@@ -1155,10 +1129,7 @@
       activeRoutine = appData.routines.find(r => r.id === routineId);
       if(!activeRoutine) return;
       
-      // Force l'écran à rester allumé
       requestWakeLock();
-      
-      startMicListening();
       activeStepIdx = 0; activeSide = 'left'; showView('view-player'); executeGlobalInitialCountdown();
     }
 
@@ -1203,11 +1174,14 @@
       document.getElementById('player-status-text').innerText = "Awaiting Vocal Command (Say START or GO)";
       document.getElementById('player-timer-digits').innerText = countdownRemaining;
       document.getElementById('btn-player-toggle').innerText = "▶️";
-      startMicListening();
       
-      // On dit le nom de la posture uniquement au début (côté gauche ou posture simple)
+      // FIX FIABILITÉ : On force le code à attendre la fin de l'annonce vocale avant de lancer l'écoute du micro
       if (activeSide === 'left') {
-        executeTextToSpeechVocalNotification(p.postureName);
+        executeTextToSpeechVocalNotification(p.postureName, () => {
+          startMicListening();
+        });
+      } else {
+        startMicListening();
       }
     }  
 
@@ -1215,26 +1189,37 @@
       clearActiveAsynchronousMemoryInstances(); activeTimerState = 2;
       stopMicListening();
 
+      // Double beep de départ
       executeSystemOscillatorBeep(900, 0.1);
-      setTimeout(() => { executeSystemOscillatorBeep(900, 0.15); }, 130);
+      setTimeout(() => { 
+        executeSystemOscillatorBeep(900, 0.15); 
+        
+        // Lancement effectif du timer APRES les bips de départ pour éviter les collisions
+        let nextNotificationDispatched = false;
+        const currentPosture = activeRoutine.postures[activeStepIdx];
+        const originalSideDuration = currentPosture.durationPerSide;
+        
+        timerIntervalId = setInterval(() => {
+          countdownRemaining--; document.getElementById('player-timer-digits').innerText = countdownRemaining;
+          
+          if (currentPosture.halfwayBeep && countdownRemaining === Math.floor(originalSideDuration / 2)) { executeSystemOscillatorBeep(600, 0.3); }
+          if (countdownRemaining === 10 && !nextNotificationDispatched) {
+            nextNotificationDispatched = true;
+            executeTextToSpeechVocalNotification(currentPosture.isDouble && activeSide === 'left' ? "Switch side coming up" : (activeStepIdx + 1 < activeRoutine.postures.length ? "Up next: " + activeRoutine.postures[activeStepIdx + 1].postureName : "Done!"));
+          }
+          if (countdownRemaining <= 3 && countdownRemaining > 0) { executeSystemOscillatorBeep(440, 0.1); }
+          if (countdownRemaining <= 0) { 
+            clearInterval(timerIntervalId); 
+            timerIntervalId = null; 
+            executeSystemOscillatorBeep(1000, 0.5); 
+            evaluatePostStepNavigationPaths(); 
+          }
+        }, 1000);
+
+      }, 150);
 
       document.getElementById('player-status-text').innerText = "Timer Running";
       document.getElementById('btn-player-toggle').innerText = "⏸️";
-      let nextNotificationDispatched = false;
-      const currentPosture = activeRoutine.postures[activeStepIdx];
-      const originalSideDuration = currentPosture.durationPerSide;
-      
-      timerIntervalId = setInterval(() => {
-        countdownRemaining--; document.getElementById('player-timer-digits').innerText = countdownRemaining;
-        
-        if (currentPosture.halfwayBeep && countdownRemaining === Math.floor(originalSideDuration / 2)) { executeSystemOscillatorBeep(600, 0.3); }
-        if (countdownRemaining === 10 && !nextNotificationDispatched) {
-          nextNotificationDispatched = true;
-          executeTextToSpeechVocalNotification(currentPosture.isDouble && activeSide === 'left' ? "Switch side coming up" : (activeStepIdx + 1 < activeRoutine.postures.length ? "Up next: " + activeRoutine.postures[activeStepIdx + 1].postureName : "Done!"));
-        }
-        if (countdownRemaining <= 3 && countdownRemaining > 0) { executeSystemOscillatorBeep(440, 0.1); }
-        if (countdownRemaining <= 0) { clearInterval(timerIntervalId); timerIntervalId = null; executeSystemOscillatorBeep(1000, 0.5); evaluatePostStepNavigationPaths(); }
-      }, 1000);
     }
 
     function startManualTriggerSequenceWithPrepDelay() {
@@ -1255,13 +1240,13 @@
       const p = activeRoutine.postures[activeStepIdx];
       if (p.isDouble && activeSide === 'left') { 
           activeSide = 'right'; 
-          executeTextToSpeechVocalNotification("Switch side"); 
-          countdownTimeoutId = setTimeout(() => { loadActivePostureIndexSequence(); }, 1500); 
+          executeTextToSpeechVocalNotification("Switch side", () => {
+             countdownTimeoutId = setTimeout(() => { loadActivePostureIndexSequence(); }, 300); 
+          }); 
       } else { 
           activeSide = 'left'; 
           activeStepIdx++; 
-          // FIX CLÉ : Délai de sécurité de 800ms pour laisser le bip finir avant de lire le nom de la posture suivante
-          countdownTimeoutId = setTimeout(() => { loadActivePostureIndexSequence(); }, 800); 
+          countdownTimeoutId = setTimeout(() => { loadActivePostureIndexSequence(); }, 600); 
       }
     }
 
@@ -1326,16 +1311,30 @@
       }
     }
 
-    function executeTextToSpeechVocalNotification(textString) {
+    // FIX ROBUSTESSE : Ajout d'une fonction de rappel (callback) pour s'assurer que la voix a fini de parler
+    function executeTextToSpeechVocalNotification(textString, callback) {
       try { 
         if (window.speechSynthesis) { 
-          window.speechSynthesis.cancel(); 
           const u = new SpeechSynthesisUtterance(textString); 
           u.lang = 'en-US'; 
           u.volume = 1.0; 
+          
+          if (callback) {
+            u.onend = () => {
+              setTimeout(callback, 100);
+            };
+            u.onerror = () => {
+              setTimeout(callback, 100);
+            };
+          }
+          
           window.speechSynthesis.speak(u); 
-        } 
-      } catch(e){}
+        } else if (callback) {
+          callback();
+        }
+      } catch(e){
+        if (callback) callback();
+      }
     }
     
     function executeSystemOscillatorBeep(freq, dur) {
@@ -1386,10 +1385,7 @@
       clearActiveAsynchronousMemoryInstances(); 
       activeRoutine = null; 
       stopMicListening();
-      
-      // Permet à l'écran de s'éteindre à nouveau normalement après la session
       releaseWakeLock();
-      
       renderHomeView(); 
       showView('view-home'); 
     }
