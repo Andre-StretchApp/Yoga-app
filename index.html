@@ -472,7 +472,7 @@
         <input type="file" id="import-file-input" class="hidden" accept=".json" onchange="importData(event)">
       </div>
 
-      <div class="app-version">v5.4</div>
+      <div class="app-version">v5.5</div>
     </section>
 
     <section id="page-global-settings" class="app-view hidden">
@@ -1186,56 +1186,52 @@
     }  
 
 function transitionToActiveTimerState2() {
-      // 1. CHAUFFE AUDIO : On force le réveil du contexte audio pendant que le micro est encore actif
-      getAudioContext(); 
-      
-      // 2. On coupe le micro IMMÉDIATEMENT pour libérer le canal
-      stopMicListening();
       clearActiveAsynchronousMemoryInstances(); 
       activeTimerState = 2;
 
       document.getElementById('player-status-text').innerText = "Timer Running";
       document.getElementById('btn-player-toggle').innerText = "⏸️";
 
-      // 3. Pause de 150ms pour stabiliser le changement de mode
-      setTimeout(() => {
-        
-        // Premier bip de départ (900Hz)
-        executeSystemOscillatorBeep(900, 0.1);
-        
-        // Deuxième bip 150ms plus tard
-        setTimeout(() => { 
-          executeSystemOscillatorBeep(900, 0.15); 
-          
-          // Récupération des données de la posture actuelle
-          let nextNotificationDispatched = false;
-          const currentPosture = activeRoutine.postures[activeStepIdx];
-          const originalSideDuration = currentPosture.durationPerSide;
-          
-          // Lancement du chrono
-          timerIntervalId = setInterval(() => {
-            countdownRemaining--; 
-            document.getElementById('player-timer-digits').innerText = countdownRemaining;
-            
-            if (currentPosture.halfwayBeep && countdownRemaining === Math.floor(originalSideDuration / 2)) { 
-              executeSystemOscillatorBeep(600, 0.3); 
-            }
-            if (countdownRemaining === 10 && !nextNotificationDispatched) {
-              nextNotificationDispatched = true;
-              executeTextToSpeechVocalNotification(currentPosture.isDouble && activeSide === 'left' ? "Switch side coming up" : (activeStepIdx + 1 < activeRoutine.postures.length ? "Up next: " + activeRoutine.postures[activeStepIdx + 1].postureName : "Done!"));
-            }
-            if (countdownRemaining <= 3 && countdownRemaining > 0) { 
-              executeSystemOscillatorBeep(440, 0.1); 
-            }
-            if (countdownRemaining <= 0) { 
-              clearInterval(timerIntervalId); 
-              timerIntervalId = null; 
-              executeSystemOscillatorBeep(1000, 0.5); 
-              evaluatePostStepNavigationPaths(); 
-            }
-          }, 1000);
+      // 1. PAS DE COUPURE BRUTALE : On coupe juste le gain du micro pour ne plus rien analyser
+      if (micStreamInstance) {
+        micStreamInstance.getAudioTracks().forEach(track => track.enabled = false);
+      }
 
-        }, 150);
+      // 2. On joue les bips immédiatement pendant que le canal audio est actif
+      executeSystemOscillatorBeep(900, 0.1);
+      
+      setTimeout(() => { 
+        executeSystemOscillatorBeep(900, 0.15); 
+        
+        // 3. Une fois les bips lancés, on peut fermer proprement le micro en arrière-plan
+        stopMicListening();
+
+        // Récupération des données et lancement du chrono
+        let nextNotificationDispatched = false;
+        const currentPosture = activeRoutine.postures[activeStepIdx];
+        const originalSideDuration = currentPosture.durationPerSide;
+        
+        timerIntervalId = setInterval(() => {
+          countdownRemaining--; 
+          document.getElementById('player-timer-digits').innerText = countdownRemaining;
+          
+          if (currentPosture.halfwayBeep && countdownRemaining === Math.floor(originalSideDuration / 2)) { 
+            executeSystemOscillatorBeep(600, 0.3); 
+          }
+          if (countdownRemaining === 10 && !nextNotificationDispatched) {
+            nextNotificationDispatched = true;
+            executeTextToSpeechVocalNotification(currentPosture.isDouble && activeSide === 'left' ? "Switch side coming up" : (activeStepIdx + 1 < activeRoutine.postures.length ? "Up next: " + activeRoutine.postures[activeStepIdx + 1].postureName : "Done!"));
+          }
+          if (countdownRemaining <= 3 && countdownRemaining > 0) { 
+            executeSystemOscillatorBeep(440, 0.1); 
+          }
+          if (countdownRemaining <= 0) { 
+            clearInterval(timerIntervalId); 
+            timerIntervalId = null; 
+            executeSystemOscillatorBeep(1000, 0.5); 
+            evaluatePostStepNavigationPaths(); 
+          }
+        }, 1000);
 
       }, 150);
     }
