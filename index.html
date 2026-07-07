@@ -472,7 +472,7 @@
         <input type="file" id="import-file-input" class="hidden" accept=".json" onchange="importData(event)">
       </div>
 
-      <div class="app-version">v5.1</div>
+      <div class="app-version">v5.2</div>
     </section>
 
     <section id="page-global-settings" class="app-view hidden">
@@ -1185,38 +1185,56 @@
       }
     }  
 
-    function transitionToActiveTimerState2() {
-      clearActiveAsynchronousMemoryInstances(); activeTimerState = 2;
+function transitionToActiveTimerState2() {
+      // 1. On coupe le micro IMMÉDIATEMENT pour ne plus rien capter
       stopMicListening();
+      clearActiveAsynchronousMemoryInstances(); 
+      activeTimerState = 2;
 
-      // Double beep de départ
-      executeSystemOscillatorBeep(900, 0.1);
-      setTimeout(() => { 
-        executeSystemOscillatorBeep(900, 0.15); 
+      document.getElementById('player-status-text').innerText = "Timer Running";
+      document.getElementById('btn-player-toggle').innerText = "⏸️";
+
+      // 2. On attend 150ms que le canal audio du micro se libère proprement
+      setTimeout(() => {
         
-        // Lancement effectif du timer APRES les bips de départ pour éviter les collisions
-        let nextNotificationDispatched = false;
-        const currentPosture = activeRoutine.postures[activeStepIdx];
-        const originalSideDuration = currentPosture.durationPerSide;
+        // Premier bip
+        executeSystemOscillatorBeep(900, 0.1);
         
-        timerIntervalId = setInterval(() => {
-          countdownRemaining--; document.getElementById('player-timer-digits').innerText = countdownRemaining;
+        // Deuxième bip 150ms après le premier
+        setTimeout(() => { 
+          executeSystemOscillatorBeep(900, 0.15); 
           
-          if (currentPosture.halfwayBeep && countdownRemaining === Math.floor(originalSideDuration / 2)) { executeSystemOscillatorBeep(600, 0.3); }
-          if (countdownRemaining === 10 && !nextNotificationDispatched) {
-            nextNotificationDispatched = true;
-            executeTextToSpeechVocalNotification(currentPosture.isDouble && activeSide === 'left' ? "Switch side coming up" : (activeStepIdx + 1 < activeRoutine.postures.length ? "Up next: " + activeRoutine.postures[activeStepIdx + 1].postureName : "Done!"));
-          }
-          if (countdownRemaining <= 3 && countdownRemaining > 0) { executeSystemOscillatorBeep(440, 0.1); }
-          if (countdownRemaining <= 0) { 
-            clearInterval(timerIntervalId); 
-            timerIntervalId = null; 
-            executeSystemOscillatorBeep(1000, 0.5); 
-            evaluatePostStepNavigationPaths(); 
-          }
-        }, 1000);
+          // Lancement du chrono seulement quand les bips ont eu le champ libre
+          let nextNotificationDispatched = false;
+          const currentPosture = activeRoutine.postures[activeStepIdx];
+          const originalSideDuration = currentPosture.durationPerSide;
+          
+          timerIntervalId = setInterval(() => {
+            countdownRemaining--; 
+            document.getElementById('player-timer-digits').innerText = countdownRemaining;
+            
+            if (currentPosture.halfwayBeep && countdownRemaining === Math.floor(originalSideDuration / 2)) { 
+              executeSystemOscillatorBeep(600, 0.3); 
+            }
+            if (countdownRemaining === 10 && !nextNotificationDispatched) {
+              nextNotificationDispatched = true;
+              executeTextToSpeechVocalNotification(currentPosture.isDouble && activeSide === 'left' ? "Switch side coming up" : (activeStepIdx + 1 < activeRoutine.postures.length ? "Up next: " + activeRoutine.postures[activeStepIdx + 1].postureName : "Done!"));
+            }
+            if (countdownRemaining <= 3 && countdownRemaining > 0) { 
+              executeSystemOscillatorBeep(440, 0.1); 
+            }
+            if (countdownRemaining <= 0) { 
+              clearInterval(timerIntervalId); 
+              timerIntervalId = null; 
+              executeSystemOscillatorBeep(1000, 0.5); 
+              evaluatePostStepNavigationPaths(); 
+            }
+          }, 1000);
 
-      }, 150);
+        }, 150);
+
+      }, 150); // Le délai magique pour laisser respirer Android
+    }
 
       document.getElementById('player-status-text').innerText = "Timer Running";
       document.getElementById('btn-player-toggle').innerText = "⏸️";
