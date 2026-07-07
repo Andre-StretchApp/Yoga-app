@@ -472,7 +472,7 @@
         <input type="file" id="import-file-input" class="hidden" accept=".json" onchange="importData(event)">
       </div>
 
-      <div class="app-version">v5.2</div>
+      <div class="app-version">v5.3</div>
     </section>
 
     <section id="page-global-settings" class="app-view hidden">
@@ -1235,10 +1235,6 @@ function transitionToActiveTimerState2() {
         }, 150);
 
       }, 150);
-    }
-
-      document.getElementById('player-status-text').innerText = "Timer Running";
-      document.getElementById('btn-player-toggle').innerText = "⏸️";
     }
 
     function startManualTriggerSequenceWithPrepDelay() {
