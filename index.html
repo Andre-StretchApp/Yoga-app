@@ -1186,7 +1186,7 @@
     }  
 
 function transitionToActiveTimerState2() {
-      // 1. On coupe le micro IMMÉDIATEMENT pour ne plus rien capter
+      // 1. On coupe le micro IMMÉDIATEMENT pour libérer le canal audio
       stopMicListening();
       clearActiveAsynchronousMemoryInstances(); 
       activeTimerState = 2;
@@ -1194,21 +1194,22 @@ function transitionToActiveTimerState2() {
       document.getElementById('player-status-text').innerText = "Timer Running";
       document.getElementById('btn-player-toggle').innerText = "⏸️";
 
-      // 2. On attend 150ms que le canal audio du micro se libère proprement
+      // 2. Pause de 150ms pour laisser respirer Android avant le premier bip
       setTimeout(() => {
         
-        // Premier bip
+        // Premier bip de départ
         executeSystemOscillatorBeep(900, 0.1);
         
-        // Deuxième bip 150ms après le premier
+        // Deuxième bip 150ms plus tard
         setTimeout(() => { 
           executeSystemOscillatorBeep(900, 0.15); 
           
-          // Lancement du chrono seulement quand les bips ont eu le champ libre
+          // Récupération des données de la posture actuelle
           let nextNotificationDispatched = false;
           const currentPosture = activeRoutine.postures[activeStepIdx];
           const originalSideDuration = currentPosture.durationPerSide;
           
+          // Lancement du chrono
           timerIntervalId = setInterval(() => {
             countdownRemaining--; 
             document.getElementById('player-timer-digits').innerText = countdownRemaining;
@@ -1233,7 +1234,7 @@ function transitionToActiveTimerState2() {
 
         }, 150);
 
-      }, 150); // Le délai magique pour laisser respirer Android
+      }, 150);
     }
 
       document.getElementById('player-status-text').innerText = "Timer Running";
