@@ -472,7 +472,7 @@
         <input type="file" id="import-file-input" class="hidden" accept=".json" onchange="importData(event)">
       </div>
 
-      <div class="app-version">v5.8</div>
+      <div class="app-version">v5.9</div>
     </section>
 
     <section id="page-global-settings" class="app-view hidden">
@@ -1186,7 +1186,7 @@
     }  
 
 function transitionToActiveTimerState2() {
-      // 1. Extinction complète du micro
+      // 1. On ferme le micro instantanément
       stopMicListening();
       clearActiveAsynchronousMemoryInstances(); 
       activeTimerState = 2;
@@ -1194,58 +1194,46 @@ function transitionToActiveTimerState2() {
       document.getElementById('player-status-text').innerText = "Timer Running";
       document.getElementById('btn-player-toggle').innerText = "⏸️";
 
-      // 2. REVEIL FORCÉ (Le Bip Fantôme) : On joue un bip inaudible à 0% de volume immédiatement
-      try {
-        const audioCtx = getAudioContext();
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(900, audioCtx.currentTime);
-        gain.gain.setValueAtTime(0, audioCtx.currentTime); // Volume à ZÉRO
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-        osc.start();
-        osc.stop(audioCtx.currentTime + 0.05);
-      } catch(e){}
+      // Récupération des données de la posture
+      let nextNotificationDispatched = false;
+      const currentPosture = activeRoutine.postures[activeStepIdx];
+      const originalSideDuration = currentPosture.durationPerSide;
+      
+      // On force l'affichage des chiffres de départ (ex: 30)
+      document.getElementById('player-timer-digits').innerText = countdownRemaining;
 
-      // 3. Zone tampon de 200ms : Android bloque le bip fantôme et rouvre le canal
-      setTimeout(() => {
+      // 2. LE CHRONO COMMENCE TOUT DE SUITE (Aucun délai)
+      timerIntervalId = setInterval(() => {
+        countdownRemaining--; 
+        document.getElementById('player-timer-digits').innerText = countdownRemaining;
         
-        // 4. LES VRAIS BIPS : Maintenant le canal est débloqué et grand ouvert
-        executeSystemOscillatorBeep(900, 0.08);
-        
-        setTimeout(() => {
-          executeSystemOscillatorBeep(900, 0.12);
-        }, 80);
+        // TON IDÉE : Les bips se calent sur les deux premières secondes écoulées
+        // Le canal audio est maintenant 100% libéré du micro !
+        if (countdownRemaining === (originalSideDuration - 1)) {
+          executeSystemOscillatorBeep(900, 0.12); // Premier bip franc
+        }
+        if (countdownRemaining === (originalSideDuration - 2)) {
+          executeSystemOscillatorBeep(900, 0.12); // Deuxième bip franc
+        }
 
-        // 5. Lancement du chrono
-        let nextNotificationDispatched = false;
-        const currentPosture = activeRoutine.postures[activeStepIdx];
-        const originalSideDuration = currentPosture.durationPerSide;
-        
-        timerIntervalId = setInterval(() => {
-          countdownRemaining--; 
-          document.getElementById('player-timer-digits').innerText = countdownRemaining;
-          
-          if (currentPosture.halfwayBeep && countdownRemaining === Math.floor(originalSideDuration / 2)) { 
-            executeSystemOscillatorBeep(600, 0.3); 
-          }
-          if (countdownRemaining === 10 && !nextNotificationDispatched) {
-            nextNotificationDispatched = true;
-            executeTextToSpeechVocalNotification(currentPosture.isDouble && activeSide === 'left' ? "Switch side coming up" : (activeStepIdx + 1 < activeRoutine.postures.length ? "Up next: " + activeRoutine.postures[activeStepIdx + 1].postureName : "Done!"));
-          }
-          if (countdownRemaining <= 3 && countdownRemaining > 0) { 
-            executeSystemOscillatorBeep(440, 0.1); 
-          }
-          if (countdownRemaining <= 0) { 
-            clearInterval(timerIntervalId); 
-            timerIntervalId = null; 
-            executeSystemOscillatorBeep(1000, 0.5); 
-            evaluatePostStepNavigationPaths(); 
-          }
-        }, 1000);
-
-      }, 200); // Laisse le temps au canal de se stabiliser après le flash silencieux
+        // --- Le reste de la logique standard de ton application ---
+        if (currentPosture.halfwayBeep && countdownRemaining === Math.floor(originalSideDuration / 2)) { 
+          executeSystemOscillatorBeep(600, 0.3); 
+        }
+        if (countdownRemaining === 10 && !nextNotificationDispatched) {
+          nextNotificationDispatched = true;
+          executeTextToSpeechVocalNotification(currentPosture.isDouble && activeSide === 'left' ? "Switch side coming up" : (activeStepIdx + 1 < activeRoutine.postures.length ? "Up next: " + activeRoutine.postures[activeStepIdx + 1].postureName : "Done!"));
+        }
+        if (countdownRemaining <= 3 && countdownRemaining > 0) { 
+          executeSystemOscillatorBeep(440, 0.1); 
+        }
+        if (countdownRemaining <= 0) { 
+          clearInterval(timerIntervalId); 
+          timerIntervalId = null; 
+          executeSystemOscillatorBeep(1000, 0.5); 
+          evaluatePostStepNavigationPaths(); 
+        }
+      }, 1000);
     }
 
     function startManualTriggerSequenceWithPrepDelay() {
