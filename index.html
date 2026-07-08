@@ -472,7 +472,7 @@
         <input type="file" id="import-file-input" class="hidden" accept=".json" onchange="importData(event)">
       </div>
 
-      <div class="app-version">v6.0</div>
+      <div class="app-version">v6.1</div>
     </section>
 
     <section id="page-global-settings" class="app-view hidden">
@@ -1202,21 +1202,33 @@ function transitionToActiveTimerState2() {
       // On force l'affichage des chiffres de départ (ex: 30)
       document.getElementById('player-timer-digits').innerText = countdownRemaining;
 
-      // COMPTEUR MAGIQUE : On part à 0 seconde écoulée pour ce côté-ci
-      let secondsElapsedThisSide = 0;
+      // Variables de contrôle pour s'assurer que chaque bip ne joue QU'UNE seule fois
+      let firstBeepDone = false;
+      let secondBeepDone = false;
 
-      // 2. LE CHRONO COMMENCE TOUT DE SUITE
+      // 2. LE CHRONO COMMENCE TOUT DE SUITE (Ta logique v5.9 qui marchait à 100%)
       timerIntervalId = setInterval(() => {
         countdownRemaining--; 
-        secondsElapsedThisSide++; // On incrémente à chaque seconde
         document.getElementById('player-timer-digits').innerText = countdownRemaining;
         
-        // Les bips se déclenchent basés sur le temps écoulé depuis le START (indépendant du countdown)
-        if (secondsElapsedThisSide === 1) {
-          executeSystemOscillatorBeep(900, 0.12); // Premier bip franc
+        // --- TON IDÉE INITIALE (v5.9) ---
+        // Premier bip à la 1ère seconde du décompte d'une posture
+        if (!firstBeepDone && countdownRemaining === (originalSideDuration - 1)) {
+          executeSystemOscillatorBeep(900, 0.12);
+          firstBeepDone = true;
         }
-        if (secondsElapsedThisSide === 2) {
-          executeSystemOscillatorBeep(900, 0.12); // Deuxième bip franc
+        // Deuxième bip à la 2e seconde du décompte d’une posture
+        if (!secondBeepDone && countdownRemaining === (originalSideDuration - 2)) {
+          executeSystemOscillatorBeep(900, 0.12);
+          secondBeepDone = true;
+        }
+
+        // --- LA SÉCURITÉ POUR LE SWITCH SIDE ---
+        // Quand on change de côté, le countdown retombe à sa valeur max (ex: 30).
+        // Si le code détecte que le countdown est revenu au sommet, on réinitialise les bips pour le 2e côté !
+        if (countdownRemaining === originalSideDuration) {
+          firstBeepDone = false;
+          secondBeepDone = false;
         }
 
         // --- Le reste de la logique standard ---
