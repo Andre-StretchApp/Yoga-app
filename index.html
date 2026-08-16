@@ -472,7 +472,7 @@
         <input type="file" id="import-file-input" class="hidden" accept=".json" onchange="importData(event)">
       </div>
 
-      <div class="app-version">v6.2</div>
+      <div class="app-version">v6.3</div>
     </section>
 
     <section id="page-global-settings" class="app-view hidden">
@@ -597,9 +597,8 @@
       beepVolume: 80
   };
 
-  // Moteur audio persistant avec fonctions de réinitialisation/libération propre pour la v6.2
+  // Moteur audio persistant
   let globalAudioCtx = null;
-  // Référence pour le Screen Wake Lock (garde l'écran allumé)
   let wakeLockInstance = null;
   
   function getAudioContext() {
@@ -613,7 +612,6 @@
       return globalAudioCtx;
   }
 
-  // RECYCLAGE AUDIO PROPRE (v6.2) : Fermeture complète du canal pour libérer Android Chrome
   function resetAudioEngine() {
       if (globalAudioCtx) {
           try {
@@ -627,36 +625,30 @@
       }
   }
 
-  // Activer l'anti-extinction d'écran
   async function requestWakeLock() {
       try {
           if ('wakeLock' in navigator) {
               wakeLockInstance = await navigator.wakeLock.request('screen');
-              console.log("Wake Lock actif : l'écran restera allumé.");
           }
       } catch (err) {
           console.warn("Échec du Wake Lock :", err.message);
       }
   }
 
-  // Désactiver l'anti-extinction d'écran
   function releaseWakeLock() {
       if (wakeLockInstance !== null) {
           wakeLockInstance.release().then(() => {
               wakeLockInstance = null;
-              console.log("Wake Lock relâché.");
           });
       }
   }
 
-  // Ré-activer le Wake Lock automatiquement si l'utilisateur change d'application et revient
   document.addEventListener('visibilitychange', async () => {
       if (wakeLockInstance !== null && document.visibilityState === 'visible') {
           await requestWakeLock();
       }
   });
   
-  // Afficher la page de réglages (Settings)
   function showSettingsPage() {
       showView('page-global-settings');
       document.getElementById('slider-mic-threshold').value = appSettings.micThreshold;
@@ -1130,7 +1122,7 @@
       activeRoutine = appData.routines.find(r => r.id === routineId);
       if(!activeRoutine) return;
       
-      resetAudioEngine(); // Réinitialisation initiale propre
+      resetAudioEngine();
       requestWakeLock();
       activeStepIdx = 0; activeSide = 'left'; showView('view-player'); executeGlobalInitialCountdown();
     }
@@ -1143,6 +1135,7 @@
 
     function executeGlobalInitialCountdown() {
       clearActiveAsynchronousMemoryInstances(); activeTimerState = 3;
+      stopMicListening(); // Assurance de coupure micro
       document.getElementById('player-posture-title').innerText = "Get Ready!";
       document.getElementById('player-side-indicator').innerText = "";
       document.getElementById('player-status-text').innerText = "Starting Routine...";
@@ -1160,8 +1153,7 @@
       clearActiveAsynchronousMemoryInstances();
       if (activeStepIdx >= activeRoutine.postures.length) { alert("Routine finished!"); exitPlaybackSession(); return; }
       
-      // v6.2 : Libération et renouvellement du canal audio à chaque changement de posture/côté
-      resetAudioEngine();
+      stopMicListening(); // Couper le micro avant la synthèse vocale
 
       const p = activeRoutine.postures[activeStepIdx]; countdownRemaining = p.durationPerSide;
       document.getElementById('player-progress').innerText = `${activeStepIdx + 1} of ${activeRoutine.postures.length}`;
@@ -1191,7 +1183,7 @@
     }  
 
     function transitionToActiveTimerState2() {
-      stopMicListening();
+      stopMicListening(); // v6.3 : On coupe complètement le micro dès que le chrono s'enclenche !
       clearActiveAsynchronousMemoryInstances(); 
       activeTimerState = 2;
 
@@ -1212,12 +1204,12 @@
         countdownRemaining--; 
         document.getElementById('player-timer-digits').innerText = countdownRemaining;
         
-        // Bip 1 (à la 1ère seconde écoulée)
+        // Bip 1 (1s)
         if (!firstBeepDone && countdownRemaining === (originalSideDuration - 1)) {
           executeSystemOscillatorBeep(900, 0.12);
           firstBeepDone = true;
         }
-        // Bip 2 (à la 2e seconde écoulée)
+        // Bip 2 (2s)
         if (!secondBeepDone && countdownRemaining === (originalSideDuration - 2)) {
           executeSystemOscillatorBeep(900, 0.12);
           secondBeepDone = true;
@@ -1338,6 +1330,7 @@
 
     function executeTextToSpeechVocalNotification(textString, callback) {
       try { 
+        stopMicListening(); // On ferme impérativement le micro pendant la parole
         if (window.speechSynthesis) { 
           const u = new SpeechSynthesisUtterance(textString); 
           u.lang = 'en-US'; 
@@ -1357,36 +1350,31 @@
       }
     }
     
-    // NŒUD AUDIO ISOLÉ & NETTOYÉ (v6.2)
+    // GENERATION BIP VIA BUFFER AUDIO (v6.3 - Ultra Robuste Android)
     function executeSystemOscillatorBeep(freq, dur) {
       try {
         const audioCtx = getAudioContext();
-        const osc = audioCtx.createOscillator(); 
-        const gain = audioCtx.createGain();
-        
-        osc.type = 'sine'; 
-        osc.frequency.setValueAtTime(freq, audioCtx.currentTime); 
-        
-        const targetVolume = appSettings.beepVolume / 100;
-        gain.gain.setValueAtTime(targetVolume, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur); 
-        
-        osc.connect(gain); 
-        gain.connect(audioCtx.destination);
-        
-        osc.start(); 
-        osc.stop(audioCtx.currentTime + dur);
+        const sampleRate = audioCtx.sampleRate;
+        const numSamples = Math.floor(sampleRate * dur);
+        const buffer = audioCtx.createBuffer(1, numSamples, sampleRate);
+        const channelData = buffer.getChannelData(0);
 
-        // Nettoyage explicite des nœuds pour ne pas saturer le processeur audio
-        setTimeout(() => {
-          try {
-            osc.disconnect();
-            gain.disconnect();
-          } catch(e) {}
-        }, (dur * 1000) + 100);
+        const targetVolume = appSettings.beepVolume / 100;
+
+        for (let i = 0; i < numSamples; i++) {
+          const t = i / sampleRate;
+          // Onde sinusoïdale pure avec enveloppe d'atténuation progressive
+          const envelope = Math.exp(-3 * (t / dur));
+          channelData[i] = Math.sin(2 * Math.PI * freq * t) * targetVolume * envelope;
+        }
+
+        const source = audioCtx.createBufferSource();
+        source.buffer = buffer;
+        source.connect(audioCtx.destination);
+        source.start();
 
       } catch(e){
-        console.warn("Erreur bip audio :", e);
+        console.warn("Erreur bip audio buffer :", e);
       }
     }
 
@@ -1419,7 +1407,7 @@
       activeRoutine = null; 
       stopMicListening();
       releaseWakeLock();
-      resetAudioEngine(); // Nettoyage final à la sortie
+      resetAudioEngine();
       renderHomeView(); 
       showView('view-home'); 
     }
