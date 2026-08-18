@@ -472,7 +472,7 @@
         <input type="file" id="import-file-input" class="hidden" accept=".json" onchange="importData(event)">
       </div>
 
-      <div class="app-version">v6.5</div>
+      <div class="app-version">v6.6</div>
     </section>
 
     <section id="page-global-settings" class="app-view hidden">
@@ -1090,7 +1090,7 @@
       el.addEventListener('dragend', () => el.style.opacity = '1');
     }
 
-    /* --- VUE D: AUDIO PLAYBACK ENGINE (v6.5 SAMPLES PROPRES) --- */
+    /* --- VUE D: AUDIO PLAYBACK ENGINE (v6.6 WEB AUDIO SYNTHESIZER HD) --- */
     function startRoutinePlayback(routineId) {
       activeRoutine = appData.routines.find(r => r.id === routineId);
       if(!activeRoutine) return;
@@ -1115,7 +1115,7 @@
       playAudioBeep('start');
       timerIntervalId = setInterval(() => {
         startCount--;
-        if (startCount > 0) { document.getElementById('player-timer-digits').innerText = startCount; playAudioBeep('start'); }
+        if (startCount > 0) { document.getElementById('player-timer-digits').innerText = startCount; playAudioBeep('tick'); }
         else if (startCount === 0) { document.getElementById('player-timer-digits').innerText = "Go!"; playAudioBeep('end'); }
         else { clearInterval(timerIntervalId); timerIntervalId = null; loadActivePostureIndexSequence(); }
       }, 1000);
@@ -1166,7 +1166,7 @@
       
       document.getElementById('player-timer-digits').innerText = countdownRemaining;
 
-      // BIP DE DÉPART INSTANTANÉ AU Lancement
+      // BIP DE DÉPART INSTANTANÉ AU LANCEMENT (AVANT DECOMPTE)
       playAudioBeep('start');
 
       timerIntervalId = setInterval(() => {
@@ -1310,21 +1310,103 @@
       }
     }
     
-    // GENERATION BIP HD HAUTE QUALITÉ VIA BASE64 WAV NETTOYÉS
-    const SOUND_SAMPLES = {
-      start: "data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQ4GAACAgICAgICAgICAgICAgICAgICAf39/f3+AgICAgICAf3+/v7+/v7+/f39/f39/gICAkJCQkI+Pj4+PkI+Pj4+QkJSUlJSUlJSUlJSUlJSUlJSUlJSUf3+AgICAgICAgICAgICAgICAgH9/f39/f4CAgICAgICAf7+/v7+/v79/f39/f3+AgICQkJCSj4+Pj4+Qj4+Pj5C",
-      halfway: "data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQ4GAACAgICAgH9/f3+/v7+/f39/gICAgICAgICAf3+/v7+/v39/f3+/v7+/v7+/v7+/v7+/v7+/v7+/v39/f39/v7+/v7+/f39/f3+/v7+/f39/f39/v7+/v39/f3+/v7+/v7+/v39/f3+/v7+/f39/f3+/v7+/v7+/v7+/v7+/v7+/f39/f39/v7+/v79/f39/f7+/v78=",
-      tick: "data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQ4GAACAgICAgH9/f3+/v7+/v7+/v7+/v7+/v7+/v39/f3+/v7+/v7+/v39/f3+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v39/f3+/v7+/v7+/f39/f3+/v7+/f39/f3+/v7+/f39/f3+/v7+/v7+/v39/f3+/v7+/f39/f3+/v7+/v7+/v7+/v7+/v7+/f39/f39/v7+/v79/f39/f7+/v78=",
-      end: "data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQ4GAACAgICAgH9/f3+/v7+/v7+/v7+/v7+/v7+/v39/f3+/v7+/v7+/v39/f3+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v39/f3+/v7+/v7+/f39/f3+/v7+/f39/f3+/v7+/f39/f3+/v7+/v7+/v39/f3+/v7+/f39/f3+/v7+/v7+/v7+/v7+/v7+/f39/f39/v7+/v79/f39/f7+/v78="
-    };
-
+    // GÉNÉRATEUR DE SONS PURS HD VIA AUDIOCONTEXT NATIVE
     function playAudioBeep(type) {
       try {
-        const audio = new Audio(SOUND_SAMPLES[type] || SOUND_SAMPLES.start);
-        audio.volume = Math.min(1.0, Math.max(0.1, appSettings.beepVolume / 100));
-        audio.play().catch(e => console.warn("Erreur playback :", e));
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        const ctx = new AudioContext();
+        const masterGain = ctx.createGain();
+        
+        const baseVol = Math.min(1.0, Math.max(0.05, (appSettings.beepVolume || 80) / 100));
+        masterGain.gain.value = baseVol;
+        masterGain.connect(ctx.destination);
+
+        const now = ctx.currentTime;
+
+        if (type === 'start') {
+          // Double note aiguë fluide (Démarrage)
+          const osc1 = ctx.createOscillator();
+          const gain1 = ctx.createGain();
+          osc1.type = 'sine';
+          osc1.frequency.setValueAtTime(880, now); // La5
+          gain1.gain.setValueAtTime(0.01, now);
+          gain1.gain.linearRampToValueAtTime(0.4, now + 0.02);
+          gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+          osc1.connect(gain1);
+          gain1.connect(masterGain);
+          osc1.start(now);
+          osc1.stop(now + 0.12);
+
+          const osc2 = ctx.createOscillator();
+          const gain2 = ctx.createGain();
+          osc2.type = 'sine';
+          osc2.frequency.setValueAtTime(1174.66, now + 0.1); // Ré6
+          gain2.gain.setValueAtTime(0.01, now + 0.1);
+          gain2.gain.linearRampToValueAtTime(0.5, now + 0.12);
+          gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.28);
+          osc2.connect(gain2);
+          gain2.connect(masterGain);
+          osc2.start(now + 0.1);
+          osc2.stop(now + 0.28);
+
+        } else if (type === 'halfway') {
+          // Carillon Mi-parcours doux (2 notes harmonieuses)
+          const osc1 = ctx.createOscillator();
+          const gain1 = ctx.createGain();
+          osc1.type = 'sine';
+          osc1.frequency.setValueAtTime(659.25, now); // Mi5
+          gain1.gain.setValueAtTime(0.01, now);
+          gain1.gain.linearRampToValueAtTime(0.3, now + 0.03);
+          gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+          osc1.connect(gain1);
+          gain1.connect(masterGain);
+          osc1.start(now);
+          osc1.stop(now + 0.25);
+
+          const osc2 = ctx.createOscillator();
+          const gain2 = ctx.createGain();
+          osc2.type = 'sine';
+          osc2.frequency.setValueAtTime(523.25, now + 0.15); // Do5
+          gain2.gain.setValueAtTime(0.01, now + 0.15);
+          gain2.gain.linearRampToValueAtTime(0.35, now + 0.18);
+          gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+          osc2.connect(gain2);
+          gain2.connect(masterGain);
+          osc2.start(now + 0.15);
+          osc2.stop(now + 0.45);
+
+        } else if (type === 'tick') {
+          // Tick discret feutré pour décompte final
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(440, now);
+          gain.gain.setValueAtTime(0.01, now);
+          gain.gain.linearRampToValueAtTime(0.2, now + 0.01);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
+          osc.connect(gain);
+          gain.connect(masterGain);
+          osc.start(now);
+          osc.stop(now + 0.06);
+
+        } else if (type === 'end') {
+          // Bip de fin pur (Do6 rond)
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(1046.50, now); // Do6
+          gain.gain.setValueAtTime(0.01, now);
+          gain.gain.linearRampToValueAtTime(0.5, now + 0.03);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+          osc.connect(gain);
+          gain.connect(masterGain);
+          osc.start(now);
+          osc.stop(now + 0.35);
+        }
+
+        setTimeout(() => { ctx.close(); }, 600);
       } catch(e) {
-        console.warn("Erreur audio sample :", e);
+        console.warn("Erreur synthèse audio :", e);
       }
     }
 
