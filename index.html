@@ -472,7 +472,7 @@
         <input type="file" id="import-file-input" class="hidden" accept=".json" onchange="importData(event)">
       </div>
 
-      <div class="app-version">v6.6</div>
+      <div class="app-version">v6.7</div>
     </section>
 
     <section id="page-global-settings" class="app-view hidden">
@@ -598,6 +598,17 @@
   };
 
   let wakeLockInstance = null;
+  let globalAudioCtx = null;
+
+  function unlockAudioContext() {
+      if (!globalAudioCtx || globalAudioCtx.state === 'closed') {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          globalAudioCtx = new AudioContext();
+      }
+      if (globalAudioCtx.state === 'suspended') {
+          globalAudioCtx.resume();
+      }
+  }
 
   async function requestWakeLock() {
       try {
@@ -659,6 +670,7 @@
   }
 
   function testBeepVolume() {
+      unlockAudioContext();
       playAudioBeep('start');
   }
 
@@ -1090,8 +1102,9 @@
       el.addEventListener('dragend', () => el.style.opacity = '1');
     }
 
-    /* --- VUE D: AUDIO PLAYBACK ENGINE (v6.6 WEB AUDIO SYNTHESIZER HD) --- */
+    /* --- VUE D: AUDIO PLAYBACK ENGINE (v6.7 UNLOCKED AUDIO CONTEXT) --- */
     function startRoutinePlayback(routineId) {
+      unlockAudioContext();
       activeRoutine = appData.routines.find(r => r.id === routineId);
       if(!activeRoutine) return;
       
@@ -1166,7 +1179,6 @@
       
       document.getElementById('player-timer-digits').innerText = countdownRemaining;
 
-      // BIP DE DÉPART INSTANTANÉ AU LANCEMENT (AVANT DECOMPTE)
       playAudioBeep('start');
 
       timerIntervalId = setInterval(() => {
@@ -1221,7 +1233,6 @@
 
     /* --- CAPTURE VOCALE NETTOYÉE --- */
     let micStreamInstance = null;
-    let audioCtxInstance = null;
     let localAnalyser = null;
 
     async function startMicListening() {
@@ -1229,17 +1240,11 @@
       stopMicListening();
 
       try {
+        unlockAudioContext();
         micStreamInstance = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-        if (!audioCtxInstance || audioCtxInstance.state === 'closed') {
-          const AudioContext = window.AudioContext || window.webkitAudioContext;
-          audioCtxInstance = new AudioContext();
-        }
-        if (audioCtxInstance.state === 'suspended') {
-          await audioCtxInstance.resume();
-        }
         
-        const source = audioCtxInstance.createMediaStreamSource(micStreamInstance);
-        localAnalyser = audioCtxInstance.createAnalyser();
+        const source = globalAudioCtx.createMediaStreamSource(micStreamInstance);
+        localAnalyser = globalAudioCtx.createAnalyser();
         localAnalyser.fftSize = 256;
         source.connect(localAnalyser);
         
@@ -1282,10 +1287,6 @@
         });
         micStreamInstance = null;
       }
-      if (audioCtxInstance && audioCtxInstance.state !== 'closed') {
-        try { audioCtxInstance.close(); } catch(e){}
-        audioCtxInstance = null;
-      }
     }
 
     function executeTextToSpeechVocalNotification(textString, callback) {
@@ -1310,11 +1311,11 @@
       }
     }
     
-    // GÉNÉRATEUR DE SONS PURS HD VIA AUDIOCONTEXT NATIVE
+    // GÉNÉRATEUR DE SONS PURS HD VIA AUDIOCONTEXT GLOBALE DÉBLOQUÉE
     function playAudioBeep(type) {
       try {
-        const AudioContext = window.AudioContext || window.webkitAudioContext;
-        const ctx = new AudioContext();
+        unlockAudioContext();
+        const ctx = globalAudioCtx;
         const masterGain = ctx.createGain();
         
         const baseVol = Math.min(1.0, Math.max(0.05, (appSettings.beepVolume || 80) / 100));
@@ -1324,11 +1325,10 @@
         const now = ctx.currentTime;
 
         if (type === 'start') {
-          // Double note aiguë fluide (Démarrage)
           const osc1 = ctx.createOscillator();
           const gain1 = ctx.createGain();
           osc1.type = 'sine';
-          osc1.frequency.setValueAtTime(880, now); // La5
+          osc1.frequency.setValueAtTime(880, now);
           gain1.gain.setValueAtTime(0.01, now);
           gain1.gain.linearRampToValueAtTime(0.4, now + 0.02);
           gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
@@ -1340,7 +1340,7 @@
           const osc2 = ctx.createOscillator();
           const gain2 = ctx.createGain();
           osc2.type = 'sine';
-          osc2.frequency.setValueAtTime(1174.66, now + 0.1); // Ré6
+          osc2.frequency.setValueAtTime(1174.66, now + 0.1);
           gain2.gain.setValueAtTime(0.01, now + 0.1);
           gain2.gain.linearRampToValueAtTime(0.5, now + 0.12);
           gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.28);
@@ -1350,11 +1350,10 @@
           osc2.stop(now + 0.28);
 
         } else if (type === 'halfway') {
-          // Carillon Mi-parcours doux (2 notes harmonieuses)
           const osc1 = ctx.createOscillator();
           const gain1 = ctx.createGain();
           osc1.type = 'sine';
-          osc1.frequency.setValueAtTime(659.25, now); // Mi5
+          osc1.frequency.setValueAtTime(659.25, now);
           gain1.gain.setValueAtTime(0.01, now);
           gain1.gain.linearRampToValueAtTime(0.3, now + 0.03);
           gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
@@ -1366,7 +1365,7 @@
           const osc2 = ctx.createOscillator();
           const gain2 = ctx.createGain();
           osc2.type = 'sine';
-          osc2.frequency.setValueAtTime(523.25, now + 0.15); // Do5
+          osc2.frequency.setValueAtTime(523.25, now + 0.15);
           gain2.gain.setValueAtTime(0.01, now + 0.15);
           gain2.gain.linearRampToValueAtTime(0.35, now + 0.18);
           gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
@@ -1376,7 +1375,6 @@
           osc2.stop(now + 0.45);
 
         } else if (type === 'tick') {
-          // Tick discret feutré pour décompte final
           const osc = ctx.createOscillator();
           const gain = ctx.createGain();
           osc.type = 'sine';
@@ -1390,11 +1388,10 @@
           osc.stop(now + 0.06);
 
         } else if (type === 'end') {
-          // Bip de fin pur (Do6 rond)
           const osc = ctx.createOscillator();
           const gain = ctx.createGain();
           osc.type = 'sine';
-          osc.frequency.setValueAtTime(1046.50, now); // Do6
+          osc.frequency.setValueAtTime(1046.50, now);
           gain.gain.setValueAtTime(0.01, now);
           gain.gain.linearRampToValueAtTime(0.5, now + 0.03);
           gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
@@ -1404,13 +1401,13 @@
           osc.stop(now + 0.35);
         }
 
-        setTimeout(() => { ctx.close(); }, 600);
       } catch(e) {
         console.warn("Erreur synthèse audio :", e);
       }
     }
 
     function playerActionToggle() {
+      unlockAudioContext();
       if (activeTimerState === 1) startManualTriggerSequenceWithPrepDelay();
       else if (activeTimerState === 2) { 
         clearActiveAsynchronousMemoryInstances(); 
@@ -1422,12 +1419,14 @@
     }
 
     function playerActionNext() {
+      unlockAudioContext();
       clearActiveAsynchronousMemoryInstances();
       if (activeRoutine.postures[activeStepIdx].isDouble && activeSide === 'left') { activeSide = 'right'; } else { activeSide = 'left'; activeStepIdx++; }
       loadActivePostureIndexSequence();
     }
 
     function playerActionBack() {
+      unlockAudioContext();
       clearActiveAsynchronousMemoryInstances();
       if (activeSide === 'right') { activeSide = 'left'; }
       else if (activeStepIdx > 0) { activeStepIdx--; activeSide = activeRoutine.postures[activeStepIdx].isDouble ? 'right' : 'left'; }
