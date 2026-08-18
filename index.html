@@ -472,7 +472,7 @@
         <input type="file" id="import-file-input" class="hidden" accept=".json" onchange="importData(event)">
       </div>
 
-      <div class="app-version">v6.7</div>
+      <div class="app-version">v6.8</div>
     </section>
 
     <section id="page-global-settings" class="app-view hidden">
@@ -671,7 +671,7 @@
 
   function testBeepVolume() {
       unlockAudioContext();
-      playAudioBeep('start');
+      playAudioBeep('tick');
   }
 
     window.onerror = function(msg, url, line) {
@@ -1102,7 +1102,7 @@
       el.addEventListener('dragend', () => el.style.opacity = '1');
     }
 
-    /* --- VUE D: AUDIO PLAYBACK ENGINE (v6.7 UNLOCKED AUDIO CONTEXT) --- */
+    /* --- VUE D: AUDIO PLAYBACK ENGINE (v6.8 CLEANED STARTUP) --- */
     function startRoutinePlayback(routineId) {
       unlockAudioContext();
       activeRoutine = appData.routines.find(r => r.id === routineId);
@@ -1125,11 +1125,11 @@
       document.getElementById('player-side-indicator').innerText = "";
       document.getElementById('player-status-text').innerText = "Starting Routine...";
       let startCount = 3; document.getElementById('player-timer-digits').innerText = startCount;
-      playAudioBeep('start');
+      playAudioBeep('tick');
       timerIntervalId = setInterval(() => {
         startCount--;
         if (startCount > 0) { document.getElementById('player-timer-digits').innerText = startCount; playAudioBeep('tick'); }
-        else if (startCount === 0) { document.getElementById('player-timer-digits').innerText = "Go!"; playAudioBeep('end'); }
+        else if (startCount === 0) { document.getElementById('player-timer-digits').innerText = "Go!"; playAudioBeep('tick'); }
         else { clearInterval(timerIntervalId); timerIntervalId = null; loadActivePostureIndexSequence(); }
       }, 1000);
     }
@@ -1178,8 +1178,6 @@
       const originalSideDuration = currentPosture.durationPerSide;
       
       document.getElementById('player-timer-digits').innerText = countdownRemaining;
-
-      playAudioBeep('start');
 
       timerIntervalId = setInterval(() => {
         countdownRemaining--; 
@@ -1324,32 +1322,7 @@
 
         const now = ctx.currentTime;
 
-        if (type === 'start') {
-          const osc1 = ctx.createOscillator();
-          const gain1 = ctx.createGain();
-          osc1.type = 'sine';
-          osc1.frequency.setValueAtTime(880, now);
-          gain1.gain.setValueAtTime(0.01, now);
-          gain1.gain.linearRampToValueAtTime(0.4, now + 0.02);
-          gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
-          osc1.connect(gain1);
-          gain1.connect(masterGain);
-          osc1.start(now);
-          osc1.stop(now + 0.12);
-
-          const osc2 = ctx.createOscillator();
-          const gain2 = ctx.createGain();
-          osc2.type = 'sine';
-          osc2.frequency.setValueAtTime(1174.66, now + 0.1);
-          gain2.gain.setValueAtTime(0.01, now + 0.1);
-          gain2.gain.linearRampToValueAtTime(0.5, now + 0.12);
-          gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.28);
-          osc2.connect(gain2);
-          gain2.connect(masterGain);
-          osc2.start(now + 0.1);
-          osc2.stop(now + 0.28);
-
-        } else if (type === 'halfway') {
+        if (type === 'halfway') {
           const osc1 = ctx.createOscillator();
           const gain1 = ctx.createGain();
           osc1.type = 'sine';
@@ -1379,8 +1352,8 @@
           const gain = ctx.createGain();
           osc.type = 'sine';
           osc.frequency.setValueAtTime(440, now);
-          gain.gain.setValueAtTime(0.01, now);
-          gain.gain.linearRampToValueAtTime(0.2, now + 0.01);
+          gain.gain.setValueAtTime(0.001, now);
+          gain.gain.linearRampToValueAtTime(0.15, now + 0.01);
           gain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
           osc.connect(gain);
           gain.connect(masterGain);
