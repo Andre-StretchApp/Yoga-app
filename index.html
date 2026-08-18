@@ -44,7 +44,7 @@
       position: relative;
       background-color: var(--bg-main);
       padding: 16px;
-      padding-bottom: 90px; /* Space for persistent bottom navigation */
+      padding-bottom: 90px;
     }
 
     .hidden {
@@ -472,7 +472,7 @@
         <input type="file" id="import-file-input" class="hidden" accept=".json" onchange="importData(event)">
       </div>
 
-      <div class="app-version">v6.3</div>
+      <div class="app-version">v6.4</div>
     </section>
 
     <section id="page-global-settings" class="app-view hidden">
@@ -597,33 +597,8 @@
       beepVolume: 80
   };
 
-  // Moteur audio persistant
-  let globalAudioCtx = null;
   let wakeLockInstance = null;
-  
-  function getAudioContext() {
-      if (!globalAudioCtx || globalAudioCtx.state === 'closed') {
-          const AudioContext = window.AudioContext || window.webkitAudioContext;
-          globalAudioCtx = new AudioContext();
-      }
-      if (globalAudioCtx.state === 'suspended') {
-          globalAudioCtx.resume();
-      }
-      return globalAudioCtx;
-  }
-
-  function resetAudioEngine() {
-      if (globalAudioCtx) {
-          try {
-              if (globalAudioCtx.state !== 'closed') {
-                  globalAudioCtx.close();
-              }
-          } catch(e) {
-              console.warn("Erreur lors de la fermeture audio:", e);
-          }
-          globalAudioCtx = null;
-      }
-  }
+  let audioContextInstance = null;
 
   async function requestWakeLock() {
       try {
@@ -724,7 +699,6 @@
       loadSettingsFromLocalStorage();
       loadDataFromStorage();
       renderHomeView();
-      setupNativeSpeechRecognition();
     });
 
     function loadDataFromStorage() {
@@ -1117,12 +1091,11 @@
       el.addEventListener('dragend', () => el.style.opacity = '1');
     }
 
-    /* --- VUE D: AUDIO PLAYBACK ENGINE --- */
+    /* --- VUE D: AUDIO PLAYBACK ENGINE (v6.4 ISOLÉ) --- */
     function startRoutinePlayback(routineId) {
       activeRoutine = appData.routines.find(r => r.id === routineId);
       if(!activeRoutine) return;
       
-      resetAudioEngine();
       requestWakeLock();
       activeStepIdx = 0; activeSide = 'left'; showView('view-player'); executeGlobalInitialCountdown();
     }
@@ -1131,11 +1104,11 @@
       if (timerIntervalId) { clearInterval(timerIntervalId); timerIntervalId = null; }
       if (countdownTimeoutId) { clearTimeout(countdownTimeoutId); countdownTimeoutId = null; }
       if (window.speechSynthesis) window.speechSynthesis.cancel();
+      stopMicListening();
     }
 
     function executeGlobalInitialCountdown() {
       clearActiveAsynchronousMemoryInstances(); activeTimerState = 3;
-      stopMicListening(); // Assurance de coupure micro
       document.getElementById('player-posture-title').innerText = "Get Ready!";
       document.getElementById('player-side-indicator').innerText = "";
       document.getElementById('player-status-text').innerText = "Starting Routine...";
@@ -1152,8 +1125,6 @@
     function loadActivePostureIndexSequence() {
       clearActiveAsynchronousMemoryInstances();
       if (activeStepIdx >= activeRoutine.postures.length) { alert("Routine finished!"); exitPlaybackSession(); return; }
-      
-      stopMicListening(); // Couper le micro avant la synthèse vocale
 
       const p = activeRoutine.postures[activeStepIdx]; countdownRemaining = p.durationPerSide;
       document.getElementById('player-progress').innerText = `${activeStepIdx + 1} of ${activeRoutine.postures.length}`;
@@ -1175,15 +1146,15 @@
       
       if (activeSide === 'left') {
         executeTextToSpeechVocalNotification(p.postureName, () => {
-          startMicListening();
+          setTimeout(() => { startMicListening(); }, 300);
         });
       } else {
-        startMicListening();
+        setTimeout(() => { startMicListening(); }, 300);
       }
     }  
 
     function transitionToActiveTimerState2() {
-      stopMicListening(); // v6.3 : On coupe complètement le micro dès que le chrono s'enclenche !
+      stopMicListening(); 
       clearActiveAsynchronousMemoryInstances(); 
       activeTimerState = 2;
 
@@ -1199,7 +1170,6 @@
       let firstBeepDone = false;
       let secondBeepDone = false;
 
-      // CHRONO v6.1 EXACT
       timerIntervalId = setInterval(() => {
         countdownRemaining--; 
         document.getElementById('player-timer-digits').innerText = countdownRemaining;
@@ -1241,7 +1211,6 @@
 
     function startManualTriggerSequenceWithPrepDelay() {
       clearActiveAsynchronousMemoryInstances(); activeTimerState = 3;
-      stopMicListening();
       let totalPrep = 3 + (activeRoutine.postures[activeStepIdx].prepDelay || 0);
       document.getElementById('player-status-text').innerText = `Preparing (${totalPrep}s)`;
       document.getElementById('player-timer-digits').innerText = totalPrep;
@@ -1267,24 +1236,26 @@
       }
     }
 
-    /* --- SYSTÈME DE CAPTURE VOCALE LOCALE --- */
+    /* --- CAPTURE VOCALE NETTOYÉE --- */
     let micStreamInstance = null;
     let localAnalyser = null;
 
-    async function setupNativeSpeechRecognition() {
-      console.log("Moteur local initialisé (Silencieux)");
-    }
-
     async function startMicListening() {
       if (activeTimerState !== 1) return;
-      if (micStreamInstance) return; 
+      stopMicListening(); // Forcer une fermeture propre au cas où
 
       try {
         micStreamInstance = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-        const audioCtx = getAudioContext();
+        if (!audioContextInstance || audioContextInstance.state === 'closed') {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          audioContextInstance = new AudioContext();
+        }
+        if (audioContextInstance.state === 'suspended') {
+          await audioContextInstance.resume();
+        }
         
-        const source = audioCtx.createMediaStreamSource(micStreamInstance);
-        localAnalyser = audioCtx.createAnalyser();
+        const source = audioContextInstance.createMediaStreamSource(micStreamInstance);
+        localAnalyser = audioContextInstance.createAnalyser();
         localAnalyser.fftSize = 256;
         source.connect(localAnalyser);
         
@@ -1293,7 +1264,6 @@
         
         const checkAudioLocale = () => {
           if (activeTimerState !== 1 || !micStreamInstance) {
-            stopMicListening();
             return;
           }
           
@@ -1317,28 +1287,34 @@
         requestAnimationFrame(checkAudioLocale);
         
       } catch (e) {
-        console.warn("Impossible d'activer le micro local :", e);
+        console.warn("Erreur micro :", e);
       }
     }
 
     function stopMicListening() {
       if (micStreamInstance) {
-        micStreamInstance.getTracks().forEach(track => track.stop());
+        micStreamInstance.getTracks().forEach(track => {
+          track.stop();
+        });
         micStreamInstance = null;
+      }
+      if (audioContextInstance && audioContextInstance.state !== 'closed') {
+        try { audioContextInstance.close(); } catch(e){}
+        audioContextInstance = null;
       }
     }
 
     function executeTextToSpeechVocalNotification(textString, callback) {
       try { 
-        stopMicListening(); // On ferme impérativement le micro pendant la parole
+        stopMicListening();
         if (window.speechSynthesis) { 
           const u = new SpeechSynthesisUtterance(textString); 
           u.lang = 'en-US'; 
           u.volume = 1.0; 
           
           if (callback) {
-            u.onend = () => { setTimeout(callback, 100); };
-            u.onerror = () => { setTimeout(callback, 100); };
+            u.onend = () => { setTimeout(callback, 200); };
+            u.onerror = () => { setTimeout(callback, 200); };
           }
           
           window.speechSynthesis.speak(u); 
@@ -1350,31 +1326,47 @@
       }
     }
     
-    // GENERATION BIP VIA BUFFER AUDIO (v6.3 - Ultra Robuste Android)
+    // GENERATION BIP VIA BALISE HTML5 <audio> (v6.4 - ISOLATION HARWARE TOTALE)
     function executeSystemOscillatorBeep(freq, dur) {
       try {
-        const audioCtx = getAudioContext();
-        const sampleRate = audioCtx.sampleRate;
+        const sampleRate = 8000;
         const numSamples = Math.floor(sampleRate * dur);
-        const buffer = audioCtx.createBuffer(1, numSamples, sampleRate);
-        const channelData = buffer.getChannelData(0);
+        const volume = (appSettings.beepVolume / 100) * 127;
+        
+        let wavHeader = [
+          0x52,0x49,0x46,0x46, 0x00,0x00,0x00,0x00, 0x57,0x41,0x56,0x45, 0x66,0x6d,0x74,0x20,
+          0x10,0x00,0x00,0x00, 0x01,0x00, 0x01,0x00, 0x40,0x1f,0x00,0x00, 0x40,0x1f,0x00,0x00,
+          0x01,0x00, 0x08,0x00, 0x64,0x61,0x74,0x61, 0x00,0x00,0x00,0x00
+        ];
 
-        const targetVolume = appSettings.beepVolume / 100;
+        let dataLen = numSamples;
+        let fileLen = dataLen + 36;
+
+        wavHeader[4] = fileLen & 0xff; wavHeader[5] = (fileLen >> 8) & 0xff;
+        wavHeader[6] = (fileLen >> 16) & 0xff; wavHeader[7] = (fileLen >> 24) & 0xff;
+        wavHeader[40] = dataLen & 0xff; wavHeader[41] = (dataLen >> 8) & 0xff;
+        wavHeader[42] = (dataLen >> 16) & 0xff; wavHeader[43] = (dataLen >> 24) & 0xff;
+
+        let pcmData = new Uint8Array(44 + numSamples);
+        pcmData.set(wavHeader, 0);
 
         for (let i = 0; i < numSamples; i++) {
-          const t = i / sampleRate;
-          // Onde sinusoïdale pure avec enveloppe d'atténuation progressive
-          const envelope = Math.exp(-3 * (t / dur));
-          channelData[i] = Math.sin(2 * Math.PI * freq * t) * targetVolume * envelope;
+          let t = i / sampleRate;
+          let sample = Math.sin(2 * Math.PI * freq * t);
+          pcmData[44 + i] = 128 + Math.floor(sample * volume);
         }
 
-        const source = audioCtx.createBufferSource();
-        source.buffer = buffer;
-        source.connect(audioCtx.destination);
-        source.start();
+        let binary = '';
+        for (let i = 0; i < pcmData.length; i++) {
+          binary += String.fromCharCode(pcmData[i]);
+        }
+        let base64Wav = btoa(binary);
+
+        let audioElement = new Audio("data:audio/wav;base64," + base64Wav);
+        audioElement.play().catch(e => console.warn("Erreur lecture audio :", e));
 
       } catch(e){
-        console.warn("Erreur bip audio buffer :", e);
+        console.warn("Erreur création WAV :", e);
       }
     }
 
@@ -1407,7 +1399,6 @@
       activeRoutine = null; 
       stopMicListening();
       releaseWakeLock();
-      resetAudioEngine();
       renderHomeView(); 
       showView('view-home'); 
     }
