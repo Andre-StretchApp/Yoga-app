@@ -472,7 +472,7 @@
         <input type="file" id="import-file-input" class="hidden" accept=".json" onchange="importData(event)">
       </div>
 
-      <div class="app-version">v6.9</div>
+      <div class="app-version">v7.0</div>
     </section>
 
     <section id="page-global-settings" class="app-view hidden">
@@ -1102,10 +1102,10 @@
       el.addEventListener('dragend', () => el.style.opacity = '1');
     }
 
-    /* --- VUE D: AUDIO PLAYBACK ENGINE (v6.9 STRICT AUDIO ROUTING) --- */
+    /* --- VUE D: AUDIO PLAYBACK ENGINE (v7.0 STRICT EXCLUSION PAROLE/BIP) --- */
     function startRoutinePlayback(routineId) {
       unlockAudioContext();
-      playAudioBeep('start'); // Warm-up silencieux/bip initial pour débloquer l'audio
+      playAudioBeep('start');
       
       activeRoutine = appData.routines.find(r => r.id === routineId);
       if(!activeRoutine) return;
@@ -1172,11 +1172,16 @@
       clearActiveAsynchronousMemoryInstances(); 
       activeTimerState = 2;
 
-      // ÉMISSION DU BIP DE DÉPART DE POSTURE EXPLICITE ET GARANTI
-      playAudioBeep('start');
-
       document.getElementById('player-status-text').innerText = "Timer Running";
       document.getElementById('btn-player-toggle').innerText = "⏸️";
+
+      // LIBÉRATION DE LA PAROLE ET BEEP ASSURÉ DANS UN THREAD DÉDIÉ
+      if (window.speechSynthesis) window.speechSynthesis.cancel();
+      
+      setTimeout(() => {
+        unlockAudioContext();
+        playAudioBeep('start');
+      }, 100);
 
       let nextNotificationDispatched = false;
       const currentPosture = activeRoutine.postures[activeStepIdx];
@@ -1234,7 +1239,7 @@
       }
     }
 
-    /* --- CAPTURE VOCALE NETTOYÉE --- */
+    /* --- CAPTURE VOCALE ET DÉTECTION AUDIO --- */
     let micStreamInstance = null;
     let localAnalyser = null;
 
@@ -1296,6 +1301,7 @@
       try { 
         stopMicListening();
         if (window.speechSynthesis) { 
+          window.speechSynthesis.cancel();
           const u = new SpeechSynthesisUtterance(textString); 
           u.lang = 'en-US'; 
           u.volume = 1.0; 
@@ -1314,7 +1320,7 @@
       }
     }
     
-    // GÉNÉRATEUR DE SONS PURS HD VIA AUDIOCONTEXT GLOBALE DÉBLOQUÉE
+    // GÉNÉRATEUR AUDIO DÉDIÉ VIA AUDIOCONTEXT
     function playAudioBeep(type) {
       try {
         unlockAudioContext();
@@ -1331,14 +1337,14 @@
           const osc = ctx.createOscillator();
           const gain = ctx.createGain();
           osc.type = 'sine';
-          osc.frequency.setValueAtTime(880, now); // Bip net à 880Hz (La4)
+          osc.frequency.setValueAtTime(880, now);
           gain.gain.setValueAtTime(0.01, now);
-          gain.gain.linearRampToValueAtTime(0.3, now + 0.02);
-          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+          gain.gain.linearRampToValueAtTime(0.4, now + 0.02);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
           osc.connect(gain);
           gain.connect(masterGain);
           osc.start(now);
-          osc.stop(now + 0.15);
+          osc.stop(now + 0.18);
 
         } else if (type === 'halfway') {
           const osc1 = ctx.createOscillator();
