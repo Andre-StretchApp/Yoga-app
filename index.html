@@ -472,7 +472,7 @@
         <input type="file" id="import-file-input" class="hidden" accept=".json" onchange="importData(event)">
       </div>
 
-      <div class="app-version">v7.0</div>
+      <div class="app-version">v7.1</div>
     </section>
 
     <section id="page-global-settings" class="app-view hidden">
@@ -589,9 +589,6 @@
   </div>
 
   <script>
-  // ==========================================
-  // CONFIGURATION GLOBALE DES RÉGLAGES
-  // ==========================================
   let appSettings = {
       micThreshold: 45,
       beepVolume: 80
@@ -600,6 +597,7 @@
   let wakeLockInstance = null;
   let globalAudioCtx = null;
 
+  // SYSTEM UNLOCK AUDIO (FORCE AUTOPLAY CLEARANCE)
   function unlockAudioContext() {
       if (!globalAudioCtx || globalAudioCtx.state === 'closed') {
           const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -608,6 +606,18 @@
       if (globalAudioCtx.state === 'suspended') {
           globalAudioCtx.resume();
       }
+      
+      // Joue un micro-bip inaudible immédiatement lors du clic pour forcer le navigateur à autoriser le canal
+      try {
+        const osc = globalAudioCtx.createOscillator();
+        const gain = globalAudioCtx.createGain();
+        osc.frequency.setValueAtTime(100, globalAudioCtx.currentTime);
+        gain.gain.setValueAtTime(0.0001, globalAudioCtx.currentTime);
+        osc.connect(gain);
+        gain.connect(globalAudioCtx.destination);
+        osc.start(0);
+        osc.stop(globalAudioCtx.currentTime + 0.01);
+      } catch(e) {}
   }
 
   async function requestWakeLock() {
@@ -1102,10 +1112,9 @@
       el.addEventListener('dragend', () => el.style.opacity = '1');
     }
 
-    /* --- VUE D: AUDIO PLAYBACK ENGINE (v7.0 STRICT EXCLUSION PAROLE/BIP) --- */
+    /* --- VUE D: AUDIO PLAYBACK ENGINE (v7.1 HARDENED) --- */
     function startRoutinePlayback(routineId) {
-      unlockAudioContext();
-      playAudioBeep('start');
+      unlockAudioContext(); // Déverrouillage strict sur le premier clic
       
       activeRoutine = appData.routines.find(r => r.id === routineId);
       if(!activeRoutine) return;
@@ -1175,13 +1184,11 @@
       document.getElementById('player-status-text').innerText = "Timer Running";
       document.getElementById('btn-player-toggle').innerText = "⏸️";
 
-      // LIBÉRATION DE LA PAROLE ET BEEP ASSURÉ DANS UN THREAD DÉDIÉ
       if (window.speechSynthesis) window.speechSynthesis.cancel();
       
-      setTimeout(() => {
-        unlockAudioContext();
-        playAudioBeep('start');
-      }, 100);
+      // Joue immédiatement le bip via le contexte pré-déverrouillé
+      unlockAudioContext();
+      playAudioBeep('start');
 
       let nextNotificationDispatched = false;
       const currentPosture = activeRoutine.postures[activeStepIdx];
@@ -1320,13 +1327,17 @@
       }
     }
     
-    // GÉNÉRATEUR AUDIO DÉDIÉ VIA AUDIOCONTEXT
+    // GENERATEUR AUDIO ROBUSTE AVEC AUDIO-BUFFER PRE-LOADED
     function playAudioBeep(type) {
       try {
         unlockAudioContext();
         const ctx = globalAudioCtx;
-        const masterGain = ctx.createGain();
         
+        if (ctx.state === 'suspended') {
+          ctx.resume();
+        }
+
+        const masterGain = ctx.createGain();
         const baseVol = Math.min(1.0, Math.max(0.05, (appSettings.beepVolume || 80) / 100));
         masterGain.gain.value = baseVol;
         masterGain.connect(ctx.destination);
@@ -1339,12 +1350,12 @@
           osc.type = 'sine';
           osc.frequency.setValueAtTime(880, now);
           gain.gain.setValueAtTime(0.01, now);
-          gain.gain.linearRampToValueAtTime(0.4, now + 0.02);
-          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+          gain.gain.linearRampToValueAtTime(0.5, now + 0.02);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
           osc.connect(gain);
           gain.connect(masterGain);
           osc.start(now);
-          osc.stop(now + 0.18);
+          osc.stop(now + 0.22);
 
         } else if (type === 'halfway') {
           const osc1 = ctx.createOscillator();
@@ -1377,12 +1388,12 @@
           osc.type = 'sine';
           osc.frequency.setValueAtTime(440, now);
           gain.gain.setValueAtTime(0.001, now);
-          gain.gain.linearRampToValueAtTime(0.15, now + 0.01);
-          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
+          gain.gain.linearRampToValueAtTime(0.2, now + 0.01);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.07);
           osc.connect(gain);
           gain.connect(masterGain);
           osc.start(now);
-          osc.stop(now + 0.06);
+          osc.stop(now + 0.07);
 
         } else if (type === 'end') {
           const osc = ctx.createOscillator();
