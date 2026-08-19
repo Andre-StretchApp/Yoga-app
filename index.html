@@ -472,7 +472,7 @@
         <input type="file" id="import-file-input" class="hidden" accept=".json" onchange="importData(event)">
       </div>
 
-      <div class="app-version">v7.1</div>
+      <div class="app-version">v7.2 (Local Audio MP3)</div>
     </section>
 
     <section id="page-global-settings" class="app-view hidden">
@@ -595,29 +595,35 @@
   };
 
   let wakeLockInstance = null;
-  let globalAudioCtx = null;
 
-  // SYSTEM UNLOCK AUDIO (FORCE AUTOPLAY CLEARANCE)
+  /* --- PRÉCHARGEMENT DES FICHIERS AUDIO LOCAUX MP3 --- */
+  const audioEffects = {
+    start: new Audio('beep_start.mp3'),
+    halfway: new Audio('beep_halfway.mp3'),
+    tick: new Audio('beep_tick.mp3'),
+    end: new Audio('beep_end.mp3')
+  };
+
   function unlockAudioContext() {
-      if (!globalAudioCtx || globalAudioCtx.state === 'closed') {
-          const AudioContext = window.AudioContext || window.webkitAudioContext;
-          globalAudioCtx = new AudioContext();
-      }
-      if (globalAudioCtx.state === 'suspended') {
-          globalAudioCtx.resume();
-      }
-      
-      // Joue un micro-bip inaudible immédiatement lors du clic pour forcer le navigateur à autoriser le canal
-      try {
-        const osc = globalAudioCtx.createOscillator();
-        const gain = globalAudioCtx.createGain();
-        osc.frequency.setValueAtTime(100, globalAudioCtx.currentTime);
-        gain.gain.setValueAtTime(0.0001, globalAudioCtx.currentTime);
-        osc.connect(gain);
-        gain.connect(globalAudioCtx.destination);
-        osc.start(0);
-        osc.stop(globalAudioCtx.currentTime + 0.01);
-      } catch(e) {}
+    // Déverrouille les canaux audio HTML5 au premier clic utilisateur
+    Object.values(audioEffects).forEach(sound => {
+      sound.muted = true;
+      sound.play().then(() => {
+        sound.pause();
+        sound.currentTime = 0;
+        sound.muted = false;
+      }).catch(() => {});
+    });
+  }
+
+  function playAudioBeep(type) {
+    const sound = audioEffects[type];
+    if (sound) {
+      sound.currentTime = 0;
+      const baseVol = Math.min(1.0, Math.max(0.05, (appSettings.beepVolume || 80) / 100));
+      sound.volume = baseVol;
+      sound.play().catch(e => console.warn("Audio bloqué :", e));
+    }
   }
 
   async function requestWakeLock() {
@@ -626,7 +632,7 @@
               wakeLockInstance = await navigator.wakeLock.request('screen');
           }
       } catch (err) {
-          console.warn("Échec du Wake Lock :", err.message);
+          console.warn("Wake Lock non supporté :", err.message);
       }
   }
 
@@ -683,14 +689,6 @@
       unlockAudioContext();
       playAudioBeep('start');
   }
-
-    window.onerror = function(msg, url, line) {
-      const list = document.getElementById('routines-list');
-      if (list) {
-        list.innerHTML = `<div style="background:#7f1d1d; color:white; padding:15px; border-radius:8px; font-family:monospace; margin-top:20px;"><b>CRASH DÉTECTÉ :</b><br>${msg}<br>Ligne: ${line}</div>`;
-      }
-      return false;
-    };
 
     const DEFAULT_CATALOG = [
       { id: "pigeon", postureName: "Pigeon Pose", imageName: "pigeon.jpg", durationPerSide: 45, isDouble: true, halfwayBeep: true, prepDelay: 3 },
@@ -1112,9 +1110,9 @@
       el.addEventListener('dragend', () => el.style.opacity = '1');
     }
 
-    /* --- VUE D: AUDIO PLAYBACK ENGINE (v7.1 HARDENED) --- */
+    /* --- VUE D: PLAYER ENGINE (v6.2 STABLE MP3) --- */
     function startRoutinePlayback(routineId) {
-      unlockAudioContext(); // Déverrouillage strict sur le premier clic
+      unlockAudioContext();
       
       activeRoutine = appData.routines.find(r => r.id === routineId);
       if(!activeRoutine) return;
@@ -1186,13 +1184,12 @@
 
       if (window.speechSynthesis) window.speechSynthesis.cancel();
       
-      // Joue immédiatement le bip via le contexte pré-déverrouillé
-      unlockAudioContext();
       playAudioBeep('start');
 
       let nextNotificationDispatched = false;
       const currentPosture = activeRoutine.postures[activeStepIdx];
       const originalSideDuration = currentPosture.durationPerSide;
+      const isLastPostureOverall = (activeStepIdx + 1 === activeRoutine.postures.length) && (!currentPosture.isDouble || activeSide === 'right');
       
       document.getElementById('player-timer-digits').innerText = countdownRemaining;
 
@@ -1203,18 +1200,32 @@
         if (currentPosture.halfwayBeep && countdownRemaining === Math.floor(originalSideDuration / 2)) { 
           playAudioBeep('halfway'); 
         }
+        
+        // Annonce vocale "Up next..." à 10s SAUF si c'est la toute dernière posture de la routine
         if (countdownRemaining === 10 && !nextNotificationDispatched) {
           nextNotificationDispatched = true;
-          executeTextToSpeechVocalNotification(currentPosture.isDouble && activeSide === 'left' ? "Switch side coming up" : (activeStepIdx + 1 < activeRoutine.postures.length ? "Up next: " + activeRoutine.postures[activeStepIdx + 1].postureName : "Done!"));
+          if (!isLastPostureOverall) {
+            executeTextToSpeechVocalNotification(currentPosture.isDouble && activeSide === 'left' ? "Switch side coming up" : "Up next: " + activeRoutine.postures[activeStepIdx + 1].postureName);
+          }
         }
+
         if (countdownRemaining <= 3 && countdownRemaining > 0) { 
           playAudioBeep('tick'); 
         }
+
         if (countdownRemaining <= 0) { 
           clearInterval(timerIntervalId); 
           timerIntervalId = null; 
           playAudioBeep('end'); 
-          evaluatePostStepNavigationPaths(); 
+          
+          // Si c'est la toute dernière posture, on dit "Done!" précisément à la fin du chrono
+          if (isLastPostureOverall) {
+            executeTextToSpeechVocalNotification("Done!", () => {
+              evaluatePostStepNavigationPaths();
+            });
+          } else {
+            evaluatePostStepNavigationPaths();
+          }
         }
       }, 1000);
     }
@@ -1249,17 +1260,25 @@
     /* --- CAPTURE VOCALE ET DÉTECTION AUDIO --- */
     let micStreamInstance = null;
     let localAnalyser = null;
+    let audioCtx = null;
 
     async function startMicListening() {
       if (activeTimerState !== 1) return;
       stopMicListening();
 
       try {
-        unlockAudioContext();
+        if (!audioCtx || audioCtx.state === 'closed') {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          audioCtx = new AudioContext();
+        }
+        if (audioCtx.state === 'suspended') {
+          await audioCtx.resume();
+        }
+
         micStreamInstance = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
         
-        const source = globalAudioCtx.createMediaStreamSource(micStreamInstance);
-        localAnalyser = globalAudioCtx.createAnalyser();
+        const source = audioCtx.createMediaStreamSource(micStreamInstance);
+        localAnalyser = audioCtx.createAnalyser();
         localAnalyser.fftSize = 256;
         source.connect(localAnalyser);
         
@@ -1324,93 +1343,6 @@
         }
       } catch(e){
         if (callback) callback();
-      }
-    }
-    
-    // GENERATEUR AUDIO ROBUSTE AVEC AUDIO-BUFFER PRE-LOADED
-    function playAudioBeep(type) {
-      try {
-        unlockAudioContext();
-        const ctx = globalAudioCtx;
-        
-        if (ctx.state === 'suspended') {
-          ctx.resume();
-        }
-
-        const masterGain = ctx.createGain();
-        const baseVol = Math.min(1.0, Math.max(0.05, (appSettings.beepVolume || 80) / 100));
-        masterGain.gain.value = baseVol;
-        masterGain.connect(ctx.destination);
-
-        const now = ctx.currentTime;
-
-        if (type === 'start') {
-          const osc = ctx.createOscillator();
-          const gain = ctx.createGain();
-          osc.type = 'sine';
-          osc.frequency.setValueAtTime(880, now);
-          gain.gain.setValueAtTime(0.01, now);
-          gain.gain.linearRampToValueAtTime(0.5, now + 0.02);
-          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
-          osc.connect(gain);
-          gain.connect(masterGain);
-          osc.start(now);
-          osc.stop(now + 0.22);
-
-        } else if (type === 'halfway') {
-          const osc1 = ctx.createOscillator();
-          const gain1 = ctx.createGain();
-          osc1.type = 'sine';
-          osc1.frequency.setValueAtTime(659.25, now);
-          gain1.gain.setValueAtTime(0.01, now);
-          gain1.gain.linearRampToValueAtTime(0.3, now + 0.03);
-          gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
-          osc1.connect(gain1);
-          gain1.connect(masterGain);
-          osc1.start(now);
-          osc1.stop(now + 0.25);
-
-          const osc2 = ctx.createOscillator();
-          const gain2 = ctx.createGain();
-          osc2.type = 'sine';
-          osc2.frequency.setValueAtTime(523.25, now + 0.15);
-          gain2.gain.setValueAtTime(0.01, now + 0.15);
-          gain2.gain.linearRampToValueAtTime(0.35, now + 0.18);
-          gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
-          osc2.connect(gain2);
-          gain2.connect(masterGain);
-          osc2.start(now + 0.15);
-          osc2.stop(now + 0.45);
-
-        } else if (type === 'tick') {
-          const osc = ctx.createOscillator();
-          const gain = ctx.createGain();
-          osc.type = 'sine';
-          osc.frequency.setValueAtTime(440, now);
-          gain.gain.setValueAtTime(0.001, now);
-          gain.gain.linearRampToValueAtTime(0.2, now + 0.01);
-          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.07);
-          osc.connect(gain);
-          gain.connect(masterGain);
-          osc.start(now);
-          osc.stop(now + 0.07);
-
-        } else if (type === 'end') {
-          const osc = ctx.createOscillator();
-          const gain = ctx.createGain();
-          osc.type = 'sine';
-          osc.frequency.setValueAtTime(1046.50, now);
-          gain.gain.setValueAtTime(0.01, now);
-          gain.gain.linearRampToValueAtTime(0.5, now + 0.03);
-          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
-          osc.connect(gain);
-          gain.connect(masterGain);
-          osc.start(now);
-          osc.stop(now + 0.35);
-        }
-
-      } catch(e) {
-        console.warn("Erreur synthèse audio :", e);
       }
     }
 
