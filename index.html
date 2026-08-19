@@ -34,7 +34,6 @@
       overflow-x: hidden;
     }
 
-    /* Strict Mobile Viewport Constraint */
     .app-container {
       width: 100%;
       max-width: 480px;
@@ -75,7 +74,6 @@
       margin-bottom: 16px;
     }
 
-    /* --- VUE A: HOME VIEW STYLE --- */
     .btn-create-routine {
       background-color: var(--text-main);
       color: var(--bg-main);
@@ -156,7 +154,6 @@
       flex: 1;
     }
 
-    /* --- VUE B: ROUTINE MANAGER WORKFLOW STYLE --- */
     .step-indicator {
       font-size: 14px;
       color: var(--text-muted);
@@ -312,7 +309,6 @@
       padding: 0 20px;
     }
 
-    /* --- VUE D: PLAYER VIEW STYLE --- */
     .player-header {
       display: flex;
       justify-content: center;
@@ -605,7 +601,6 @@
   };
 
   function unlockAudioContext() {
-    // Déverrouille les canaux audio HTML5 au premier clic utilisateur
     Object.values(audioEffects).forEach(sound => {
       sound.muted = true;
       sound.play().then(() => {
@@ -1110,7 +1105,6 @@
       el.addEventListener('dragend', () => el.style.opacity = '1');
     }
 
-    /* --- VUE D: PLAYER ENGINE (v6.2 STABLE MP3) --- */
     function startRoutinePlayback(routineId) {
       unlockAudioContext();
       
@@ -1201,7 +1195,6 @@
           playAudioBeep('halfway'); 
         }
         
-        // Annonce vocale "Up next..." à 10s SAUF si c'est la toute dernière posture de la routine
         if (countdownRemaining === 10 && !nextNotificationDispatched) {
           nextNotificationDispatched = true;
           if (!isLastPostureOverall) {
@@ -1218,7 +1211,6 @@
           timerIntervalId = null; 
           playAudioBeep('end'); 
           
-          // Si c'est la toute dernière posture, on dit "Done!" précisément à la fin du chrono
           if (isLastPostureOverall) {
             executeTextToSpeechVocalNotification("Done!", () => {
               evaluatePostStepNavigationPaths();
@@ -1257,7 +1249,6 @@
       }
     }
 
-    /* --- CAPTURE VOCALE ET DÉTECTION AUDIO --- */
     let micStreamInstance = null;
     let localAnalyser = null;
     let audioCtx = null;
