@@ -144,6 +144,7 @@
       display: flex;
       gap: 8px;
       padding-top: 20px;
+      flex-wrap: wrap;
     }
 
     .btn-backup {
@@ -152,6 +153,7 @@
       font-size: 12px;
       padding: 8px;
       flex: 1;
+      min-width: 30%;
     }
 
     .step-indicator {
@@ -468,7 +470,7 @@
         <input type="file" id="import-file-input" class="hidden" accept=".json" onchange="importData(event)">
       </div>
 
-      <div class="app-version">v7.4 (Mic Delay Anti-Trigger Fix)</div>
+      <div class="app-version">v7.5 (Data Persistence & Recovery Fix)</div>
     </section>
 
     <section id="page-global-settings" class="app-view hidden">
@@ -494,6 +496,8 @@
         </div>
         <button onclick="testBeepVolume()" style="margin-top: 14px; width: 100%; padding: 10px; background: #27272a; border: 1px solid #3f3f46; color: #fff; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer;">🎵 Test Volume</button>
       </div>
+
+      <button onclick="restoreDefaultData()" style="width: 100%; padding: 12px; background: var(--accent-danger); color: white; border: none; border-radius: 10px; font-weight: bold; font-size: 14px; cursor: pointer; text-align: center; margin-bottom: 12px;">🔄 Reset Default Routines</button>
 
       <button onclick="hideSettingsPage()" class="btn-db-trigger" style="width: 100%; padding: 14px; background: var(--accent-primary); color: white; border: none; border-radius: 10px; font-weight: bold; font-size: 16px; cursor: pointer; text-align: center;">Back to Home</button>
     </section>
@@ -720,9 +724,9 @@
         const stored = localStorage.getItem('yogaData');
         if (stored) {
           let parsed = JSON.parse(stored);
-          if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+          if (parsed && typeof parsed === 'object' && !Array.isArray(parsed) && parsed.routines && parsed.routines.length > 0) {
             appData.globalCatalog = parsed.globalCatalog || [...DEFAULT_CATALOG];
-            appData.routines = parsed.routines || [...DEFAULT_ROUTINES];
+            appData.routines = parsed.routines;
           } else {
             resetToSeedData();
           }
@@ -738,6 +742,14 @@
       appData.globalCatalog = [...DEFAULT_CATALOG];
       appData.routines = [...DEFAULT_ROUTINES];
       commitToStorage();
+    }
+
+    function restoreDefaultData() {
+      if(confirm("Voulez-vous réinitialiser les routines par défaut ?")) {
+        resetToSeedData();
+        renderHomeView();
+        hideSettingsPage();
+      }
     }
 
     function commitToStorage() {
@@ -756,8 +768,8 @@
     function renderHomeView() {
       const container = document.getElementById('routines-list');
       container.innerHTML = '';
-      if(appData.routines.length === 0) {
-        container.innerHTML = `<p style="color:var(--text-muted); text-align:center; padding:20px;">No routines generated yet.</p>`;
+      if(!appData.routines || appData.routines.length === 0) {
+        container.innerHTML = `<p style="color:var(--text-muted); text-align:center; padding:20px;">No routines generated yet.<br><br><button onclick="restoreDefaultData()" style="padding:8px 16px; background:#27272a; color:#fff; border:1px solid #3f3f46;">Restore Default Routine</button></p>`;
         return;
       }
       appData.routines.forEach(routine => {
@@ -1161,7 +1173,6 @@
       document.getElementById('player-timer-digits').innerText = countdownRemaining;
       document.getElementById('btn-player-toggle').innerText = "▶️";
       
-      // Delai de securite de 1 seconde avant d'ouvrir le micro
       if (activeSide === 'left') {
         executeTextToSpeechVocalNotification(p.postureName, () => {
           countdownTimeoutId = setTimeout(() => { startMicListening(); }, 1000);
@@ -1181,7 +1192,6 @@
 
       if (window.speechSynthesis) window.speechSynthesis.cancel();
       
-      // Bip de départ immédiatement déclenché au départ du chrono
       playAudioBeep('start');
 
       let nextNotificationDispatched = false;
@@ -1195,12 +1205,10 @@
         countdownRemaining--; 
         document.getElementById('player-timer-digits').innerText = countdownRemaining;
 
-        // Bip mi-parcours
         if (currentPosture.halfwayBeep && countdownRemaining === Math.floor(originalSideDuration / 2)) { 
           playAudioBeep('halfway'); 
         }
         
-        // Notification à 10s
         if (countdownRemaining === 10 && !nextNotificationDispatched) {
           nextNotificationDispatched = true;
           if (!isLastPostureOverall) {
@@ -1208,12 +1216,10 @@
           }
         }
 
-        // Bips 3, 2, 1
         if (countdownRemaining <= 3 && countdownRemaining > 0) { 
           playAudioBeep('tick'); 
         }
 
-        // Fin de posture
         if (countdownRemaining <= 0) { 
           clearInterval(timerIntervalId); 
           timerIntervalId = null; 
