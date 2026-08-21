@@ -1,53 +1,70 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>StretchApp v8.1</title>
+  <title>StretchApp</title>
   <style>
+    /* --- DESIGN SYSTEM & SYSTEM CONSTRAINTS (Dark Theme Strict) --- */
     :root {
       --bg-main: #121214;
       --bg-card: #1e1e22;
       --text-main: #ffffff;
       --text-muted: #a1a1aa;
       --accent-danger: #7f1d1d;
+      --accent-danger-hover: #991b1b;
+      --accent-success: #16a34a;
       --accent-primary: #3b82f6;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
 
     body {
       background-color: var(--bg-main);
       color: var(--text-main);
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       min-height: 100vh;
       display: flex;
       justify-content: center;
+      overflow-x: hidden;
     }
 
+    /* Strict Mobile Viewport Constraint */
     .app-container {
       width: 100%;
       max-width: 480px;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
+      position: relative;
+      background-color: var(--bg-main);
       padding: 16px;
       padding-bottom: 90px;
-      position: relative;
     }
 
-    .hidden { display: none !important; }
+    .hidden {
+      display: none !important;
+    }
 
-    h1, h2 { font-weight: 700; margin-bottom: 16px; }
+    h1, h2, h3 {
+      font-weight: 700;
+      margin-bottom: 16px;
+    }
 
     button {
       cursor: pointer;
       border: none;
       border-radius: 8px;
       font-weight: 600;
+      transition: background 0.2s ease;
     }
 
-    input {
+    input, select, textarea {
       background-color: var(--bg-card);
       border: 1px solid #3f3f46;
       color: var(--text-main);
@@ -58,12 +75,14 @@
       margin-bottom: 16px;
     }
 
-    .btn-create {
+    /* --- VUE A: HOME VIEW STYLE --- */
+    .btn-create-routine {
       background-color: var(--text-main);
       color: var(--bg-main);
       padding: 14px;
       width: 100%;
       font-size: 16px;
+      text-align: center;
       margin-bottom: 24px;
     }
 
@@ -75,29 +94,58 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+      position: relative;
     }
 
-    .routine-name { font-size: 18px; font-weight: 600; text-transform: capitalize; }
-    .routine-duration { font-size: 12px; color: var(--text-muted); margin-top: 4px; font-weight: 700; }
+    .routine-info {
+      flex-grow: 1;
+    }
 
-    .btn-play {
-      background-color: var(--accent-primary);
-      color: white;
-      padding: 8px 16px;
+    .routine-name {
+      font-size: 18px;
+      font-weight: 600;
+      text-transform: capitalize;
+    }
+
+    .routine-duration {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 4px;
+      font-weight: 700;
+    }
+
+    .tile-menu-btn {
+      background: transparent;
+      color: var(--text-main);
+      font-size: 24px;
+      padding: 4px 12px;
+    }
+
+    .context-menu {
+      position: absolute;
+      top: 45px;
+      right: 16px;
+      background-color: #27272a;
+      border-radius: 6px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .context-menu button {
+      background: transparent;
+      color: var(--text-main);
+      padding: 12px 24px;
+      text-align: left;
       font-size: 14px;
     }
 
-    .btn-danger {
-      background-color: var(--accent-danger);
-      color: white;
-      padding: 8px 12px;
-      font-size: 12px;
-    }
-
     .backup-zone {
-      margin-top: 20px;
+      margin-top: auto;
       display: flex;
       gap: 8px;
+      padding-top: 20px;
     }
 
     .btn-backup {
@@ -108,258 +156,1261 @@
       flex: 1;
     }
 
+    /* --- VUE B: ROUTINE MANAGER WORKFLOW STYLE --- */
+    .step-indicator {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+
     .list-container {
       background-color: var(--bg-card);
       border-radius: 10px;
+      min-height: 120px;
       margin-bottom: 20px;
-      padding: 8px;
+      overflow: hidden;
     }
 
-    .item-row {
+    .swipe-row-wrapper {
+      position: relative;
+      overflow: hidden;
+      background-color: var(--accent-danger);
+      border-bottom: 1px solid #27272a;
+    }
+
+    .swipe-row-bg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding-right: 20px;
+      color: white;
+      font-weight: 700;
+      font-size: 14px;
+    }
+
+    .swipe-row-fg {
+      background-color: var(--bg-card);
+      padding: 14px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: transform 0.2s ease-out;
+      position: relative;
+      z-index: 2;
+    }
+
+    .btn-db-trigger {
+      background-color: #27272a;
+      color: var(--text-main);
       padding: 12px;
+      width: 100%;
+      margin-bottom: 20px;
+    }
+
+    .available-posture-item {
+      padding: 14px 16px;
       border-bottom: 1px solid #27272a;
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
 
-    .workflow-nav {
-      position: fixed;
+    .db-posture-row {
+      padding: 14px 16px;
+      border-bottom: 1px solid #27272a;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .btn-del {
+      background-color: var(--accent-danger);
+      color: white;
+      padding: 6px 12px;
+      font-size: 12px;
+    }
+
+    .config-row {
+      padding: 12px 16px;
+      border-bottom: 1px solid #27272a;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .config-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .drag-handle {
+      cursor: grab;
+      color: var(--text-muted);
+      font-size: 18px;
+    }
+
+    .badge-double {
+      background-color: #3a3a42;
+      font-size: 11px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin-left: 6px;
+    }
+
+    .timer-controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .btn-time-step {
+      background-color: #27272a;
+      color: white;
+      width: 32px;
+      height: 32px;
+      font-size: 18px;
+    }
+
+    .local-duration-display {
+      font-variant-numeric: tabular-nums;
+      font-weight: 600;
+      min-width: 40px;
+      text-align: center;
+    }
+
+    .workflow-nav-bar {
+      position: absolute;
       bottom: 0;
       left: 0;
       width: 100%;
-      background: var(--bg-main);
-      padding: 12px;
-      display: flex;
-      gap: 8px;
+      height: 76px;
+      background-color: var(--bg-main);
+      padding: 12px 16px;
       border-top: 1px solid #27272a;
+      display: flex;
+      gap: 12px;
+      z-index: 100;
+    }
+
+    .btn-wf-next {
+      background-color: var(--accent-primary);
+      color: white;
+      flex: 1;
+      font-size: 16px;
+    }
+
+    .btn-wf-cancel {
+      background-color: #27272a;
+      color: var(--text-main);
+      padding: 0 20px;
+    }
+
+    /* --- VUE D: PLAYER VIEW STYLE --- */
+    .player-header {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+      margin-bottom: 20px;
+    }
+
+    .progress-text {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-muted);
+    }
+
+    .up-next-vignette {
+      position: absolute;
+      top: 0;
+      right: 0;
+      background-color: var(--bg-card);
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      max-width: 120px;
+      text-align: right;
+    }
+
+    .up-next-label {
+      color: var(--text-muted);
+      font-weight: 700;
+      font-size: 9px;
+    }
+
+    .up-next-name {
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .player-body {
+      flex: 1;
       display: flex;
       flex-direction: column;
       align-items: center;
+      justify-content: center;
       text-align: center;
-      margin-top: 40px;
+      padding: 20px 0;
     }
 
-    .countdown { font-size: 72px; font-weight: 800; margin: 20px 0; }
+    .active-posture-title {
+      font-size: 28px;
+      font-weight: 800;
+      margin-bottom: 4px;
+    }
+
+    .active-side-indicator {
+      font-size: 16px;
+      color: var(--accent-primary);
+      font-weight: 700;
+      margin-bottom: 16px;
+    }
+
+    .image-placeholder {
+      width: 85vw;
+      height: 85vw;
+      max-width: 320px;
+      max-height: 320px;
+      background-color: var(--bg-card);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 24px;
+      overflow: hidden;
+      border: 1px solid #27272a;
+      aspect-ratio: 1 / 1;
+    }
+
+    .image-placeholder img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .player-status-banner {
+      font-size: 13px;
+      color: var(--text-muted);
+      background-color: #27272a;
+      padding: 6px 16px;
+      border-radius: 20px;
+      margin-bottom: 20px;
+    }
+
+    .countdown-display {
+      font-size: 72px;
+      font-weight: 800;
+      line-height: 1;
+    }
+
+    .player-controls-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 80px;
+      border-top: 1px solid #27272a;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      padding: 0 24px;
+      background-color: var(--bg-main);
+    }
+
+    .btn-player-side {
+      background: transparent;
+      color: var(--text-main);
+      font-size: 24px;
+      padding: 12px;
+    }
+
+    .btn-player-center {
+      background-color: var(--text-main);
+      color: var(--bg-main);
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      font-size: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .app-version {
+      text-align: center; 
+      color: var(--text-muted); 
+      font-size: 12px; 
+      margin-top: 25px; 
+      padding-bottom: 15px; 
+      font-family: monospace;
+    }
   </style>
 </head>
 <body>
 
 <div class="app-container">
+    
+    <section id="view-home" class="app-view">
+      <h1>Routines</h1>
+      <button class="btn-create-routine" onclick="initCreateRoutineWorkflow()">Create a routine</button>
+      
+      <div id="routines-list"></div>
 
-  <section id="view-home">
-    <h1>Routines</h1>
-    <button class="btn-create" onclick="startNewRoutine()">+ Créer une routine</button>
-    <div id="routines-list"></div>
-    <div class="backup-zone">
-      <button class="btn-backup" onclick="resetDefaults()">🔄 Réinitialiser les routines</button>
-    </div>
-  </section>
+      <div class="backup-zone">
+        <button class="btn-backup" onclick="exportData()">Export Catalog</button>
+        <button class="btn-backup" onclick="triggerImportClick()">Import Catalog</button>
+        <button class="btn-backup" onclick="showSettingsPage()">⚙️ Settings</button>
+        <input type="file" id="import-file-input" class="hidden" accept=".json" onchange="importData(event)">
+      </div>
 
-  <section id="view-editor" class="hidden">
-    <h2>Créer / Modifier Routine</h2>
-    <input type="text" id="editor-name" placeholder="Nom de la routine (ex: Matin)">
-    <h3>Postures disponibles</h3>
-    <div id="editor-catalog" class="list-container"></div>
-    <h3>Postures ajoutées</h3>
-    <div id="editor-selected" class="list-container"></div>
-    <div class="workflow-nav">
-      <button class="btn-backup" onclick="showView('view-home')">Annuler</button>
-      <button class="btn-play" style="flex:1;" onclick="saveRoutine()">Sauvegarder</button>
-    </div>
-  </section>
+      <div class="app-version">v8.0</div>
+    </section>
 
-  <section id="view-player" class="hidden">
-    <button class="btn-danger" onclick="stopPlayer()">Quitter</button>
-    <div class="player-body">
-      <h2 id="player-title">Posture</h2>
-      <div id="player-side" style="color:var(--accent-primary); font-weight:bold;"></div>
-      <div class="countdown" id="player-timer">00</div>
-      <button class="btn-create" id="btn-toggle" onclick="toggleTimer()">▶️ Démarrer / Pause</button>
-    </div>
-  </section>
+    <section id="page-global-settings" class="app-view hidden">
+      <div class="header" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px;">
+        <h1 style="font-size: 24px; font-weight: 700; letter-spacing: -0.5px;">Settings</h1>
+      </div>
 
-</div>
+      <div style="background: var(--bg-card); padding: 16px; border-radius: 12px; margin-bottom: 16px;">
+        <label style="display: block; font-weight: 600; margin-bottom: 6px; font-size: 15px;">🎤 Mic Threshold (Sensitivity)</label>
+        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px; line-height: 1.4;">Lower % = more sensitive. Increase this value if your timer triggers automatically due to floor friction or ambient noise.</p>
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <input type="range" id="slider-mic-threshold" min="5" max="95" step="5" style="flex-grow: 1; height: 6px; border-radius: 3px; accent-color: var(--accent-primary);" oninput="updateMicSettingsLive(this.value)">
+          <span id="display-mic-threshold" style="font-weight: bold; width: 45px; text-align: right; font-variant-numeric: tabular-nums;">45%</span>
+        </div>
+      </div>
 
-<script>
-  var DEFAULT_POSTURES = [
-    { id: 'p1', name: 'Pigeon Pose', duration: 45, isDouble: true },
-    { id: 'p2', name: 'Cobra Pose', duration: 30, isDouble: false }
-  ];
+      <div style="background: var(--bg-card); padding: 16px; border-radius: 12px; margin-bottom: 24px;">
+        <label style="display: block; font-weight: 600; margin-bottom: 6px; font-size: 15px;">🔊 Beep Volume</label>
+        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px; line-height: 1.4;">Adjusts the volume for all routine beeps (start, halfway, and end).</p>
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <input type="range" id="slider-beep-volume" min="10" max="100" step="5" style="flex-grow: 1; height: 6px; border-radius: 3px; accent-color: var(--accent-primary);" oninput="updateBeepSettingsLive(this.value)">
+          <span id="display-beep-volume" style="font-weight: bold; width: 45px; text-align: right; font-variant-numeric: tabular-nums;">80%</span>
+        </div>
+        <button onclick="testBeepVolume()" style="margin-top: 14px; width: 100%; padding: 10px; background: #27272a; border: 1px solid #3f3f46; color: #fff; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer;">🎵 Test Volume</button>
+      </div>
 
-  var DEFAULT_ROUTINE = {
-    id: 'r1',
-    name: 'Routine Rapide',
-    postures: [...DEFAULT_POSTURES]
+      <button onclick="hideSettingsPage()" class="btn-db-trigger" style="width: 100%; padding: 14px; background: var(--accent-primary); color: white; border: none; border-radius: 10px; font-weight: bold; font-size: 16px; cursor: pointer; text-align: center;">Back to Home</button>
+    </section>
+    
+    <section id="view-routine-manager" class="app-view hidden">
+      <div id="panel-step-1" class="workflow-panel">
+        <div class="step-indicator">Step 1 of 3: Select Stretches</div>
+        <h2>Assemble Routine</h2>
+        <p style="font-size:12px; color:var(--text-muted); margin-bottom:8px;">Included (Swipe left to remove):</p>
+        <div id="included-stretches-list" class="list-container"></div>
+        <button class="btn-db-trigger" onclick="toggleDatabaseSubscreen(true)">[Posture Database]</button>
+        <p style="font-size:12px; color:var(--text-muted); margin-bottom:8px;">Available (Click to add):</p>
+        <div id="available-stretches-list" class="list-container"></div>
+      </div>
+
+      <div id="panel-database-subscreen" class="workflow-panel hidden">
+        <h2>Posture Database</h2>
+        <button class="btn-create-routine" style="background-color: var(--accent-primary); color: white;" onclick="goToBuilderFromDb()">[Add Posture]</button>
+        <div id="database-catalog-list" class="list-container"></div>
+        <button class="btn-db-trigger" style="margin-top:20px;" onclick="toggleDatabaseSubscreen(false)">[Back]</button>
+      </div>
+
+      <div id="panel-step-2" class="workflow-panel hidden">
+        <div class="step-indicator">Step 2 of 3: Choose Lengths</div>
+        <h2>Configure Technical Specs</h2>
+        <div id="config-lengths-list" class="list-container"></div>
+      </div>
+
+      <div id="panel-step-3" class="workflow-panel hidden">
+        <div class="step-indicator">Step 3 of 3: Name Routine</div>
+        <h2>Finalize Setup</h2>
+        <label for="routine-name-input" style="font-size:14px; color:var(--text-muted); display:block; margin-bottom:8px;">Routine Name</label>
+        <input type="text" id="routine-name-input" placeholder="e.g., Evening Stretch">
+      </div>
+
+      <div id="manager-nav-bar" class="workflow-nav-bar">
+        <button class="btn-wf-cancel" onclick="cancelRoutineWorkflow()">[Cancel]</button>
+        <button class="btn-wf-next" id="btn-workflow-forward" onclick="advanceWorkflowStep()">[NEXT]</button>
+      </div>
+    </section>
+
+    <section id="view-builder" class="app-view hidden">
+      <h2>Create Posture</h2>
+      
+      <label style="font-size:14px; color:var(--text-muted);">Image File Name (Click to select from phone)</label>
+      <input type="text" id="posture-image" placeholder="Click to select an image..." onclick="triggerLocalFileSelector()" readonly>
+      <input type="file" id="hidden-posture-file-input" class="hidden" accept="image/*" onchange="handleLocalFileSelection(event)">
+
+      <label style="font-size:14px; color:var(--text-muted);">Posture Name</label>
+      <input type="text" id="posture-name" placeholder="Will be filled automatically">
+      
+      <label style="font-size:14px; color:var(--text-muted);">Duration Per Side (seconds)</label>
+      <input type="number" id="posture-duration" value="45" min="5">
+      <div class="checkbox-group">
+        <input type="checkbox" id="posture-double" checked>
+        <label for="posture-double">Is Double (Left then Right side)</label>
+      </div>
+      <label style="font-size:14px; color:var(--text-muted);">Extra Preparation Delay (seconds)</label>
+      <input type="number" id="posture-prep" value="0" min="0">
+      
+      <div class="form-actions">
+        <button class="btn-wf-cancel" style="padding:14px;" onclick="closeBuilderView()">[Cancel]</button>
+        <button class="btn-save-catalog" onclick="savePostureToCatalog()">[Save to Catalog]</button>
+      </div>
+    </section>
+
+    <section id="view-player" class="app-view hidden">
+      <div class="player-header">
+        <button id="btn-quit-player" onclick="exitPlaybackSession()" style="position:absolute; left:0; background: var(--accent-danger); color: white; border: none; padding: 6px 12px; border-radius: 6px; font-weight: bold; font-size: 14px; cursor: pointer; z-index: 10;">Quit</button>
+        <div class="progress-text" id="player-progress">1 of 1</div>
+        <div class="up-next-vignette">
+          <div class="up-next-label">Up Next</div>
+          <div class="up-next-name" id="player-up-next">Done!</div>
+        </div>
+      </div>
+      <div class="player-body">
+        <div class="active-posture-title" id="player-posture-title">Posture Name</div>
+        <div class="active-side-indicator" id="player-side-indicator"></div>
+        <div class="image-placeholder" id="player-image-display"></div>
+        <div class="player-status-banner" id="player-status-text">Awaiting Vocal Command</div>
+        <div class="countdown-display" id="player-timer-digits">00</div>
+      </div>
+      <div class="player-controls-bar">
+        <button class="btn-player-side" onclick="playerActionBack()">⏮️</button>
+        <button class="btn-player-center" id="btn-player-toggle" onclick="playerActionToggle()">▶️</button>
+        <button class="btn-player-side" onclick="playerActionNext()">⏭️</button>
+      </div>
+    </section>
+  </div>
+
+  <script>
+  // ==========================================
+  // CONFIGURATION GLOBALE DES RÉGLAGES
+  // ==========================================
+  let appSettings = {
+      micThreshold: 45,
+      beepVolume: 80
   };
 
-  var appData = { routines: [DEFAULT_ROUTINE] };
-  var currentEdit = { name: '', postures: [] };
-  var activeSession = { routine: null, idx: 0, side: 'gauche', time: 0, timer: null, running: false };
+  // Référence pour le Screen Wake Lock (garde l'écran allumé)
+  let wakeLockInstance = null;
+  
+  // ==========================================
+  // SYSTÈME AUDIO MP3 (Remplacement de l'AudioContext)
+  // ==========================================
+  const audioFiles = {
+      'start': new Audio('beep_start.mp3'),
+      'halfway': new Audio('beep_halfway.mp3'),
+      'tick': new Audio('beep_tick.mp3'),
+      'end': new Audio('beep_end.mp3')
+  };
 
-  function loadData() {
-    try {
-      var saved = localStorage.getItem('stretch_data_v8');
-      if (saved) appData = JSON.parse(saved);
-    } catch(e) {}
-    renderHome();
+  // Préchargement
+  Object.values(audioFiles).forEach(a => a.load());
+
+  function playBeep(type) {
+      try {
+          const snd = audioFiles[type];
+          if(snd) {
+              snd.currentTime = 0;
+              snd.volume = appSettings.beepVolume / 100;
+              snd.play().catch(e => console.log("Audio play error", e));
+          }
+      } catch(e) {}
   }
 
-  function saveData() {
-    localStorage.setItem('stretch_data_v8', JSON.stringify(appData));
+  // Activer l'anti-extinction d'écran
+  async function requestWakeLock() {
+      try {
+          if ('wakeLock' in navigator) {
+              wakeLockInstance = await navigator.wakeLock.request('screen');
+              console.log("Wake Lock actif : l'écran restera allumé.");
+          }
+      } catch (err) {
+          console.warn("Échec du Wake Lock :", err.message);
+      }
   }
 
-  function resetDefaults() {
-    appData = { routines: [JSON.parse(JSON.stringify(DEFAULT_ROUTINE))] };
-    saveData();
-    renderHome();
+  // Désactiver l'anti-extinction d'écran
+  function releaseWakeLock() {
+      if (wakeLockInstance !== null) {
+          wakeLockInstance.release().then(() => {
+              wakeLockInstance = null;
+              console.log("Wake Lock relâché.");
+          });
+      }
   }
 
-  function showView(id) {
-    document.querySelectorAll('section').forEach(s => s.classList.add('hidden'));
-    document.getElementById(id).classList.remove('hidden');
+  // Ré-activer le Wake Lock automatiquement si l'utilisateur change d'application et revient
+  document.addEventListener('visibilitychange', async () => {
+      if (wakeLockInstance !== null && document.visibilityState === 'visible') {
+          await requestWakeLock();
+      }
+  });
+  
+  // Afficher la page de réglages (Settings)
+  function showSettingsPage() {
+      showView('page-global-settings');
+      document.getElementById('slider-mic-threshold').value = appSettings.micThreshold;
+      document.getElementById('display-mic-threshold').innerText = appSettings.micThreshold + "%";
+      document.getElementById('slider-beep-volume').value = appSettings.beepVolume;
+      document.getElementById('display-beep-volume').innerText = appSettings.beepVolume + "%";
+  }
+  
+  function hideSettingsPage() {
+      showView('view-home');
+  }
+  
+  function updateMicSettingsLive(val) {
+      appSettings.micThreshold = parseInt(val);
+      document.getElementById('display-mic-threshold').innerText = val + "%";
+      saveSettingsToLocalStorage();
+  }
+  
+  function updateBeepSettingsLive(val) {
+      appSettings.beepVolume = parseInt(val);
+      document.getElementById('display-beep-volume').innerText = val + "%";
+      saveSettingsToLocalStorage();
+  }
+  
+  function saveSettingsToLocalStorage() {
+      localStorage.setItem('stretch_app_settings', JSON.stringify(appSettings));
+  }
+  
+  function loadSettingsFromLocalStorage() {
+      const saved = localStorage.getItem('stretch_app_settings');
+      if (saved) {
+          appSettings = JSON.parse(saved);
+      }
   }
 
-  function renderHome() {
-    showView('view-home');
-    var container = document.getElementById('routines-list');
-    container.innerHTML = '';
+  function testBeepVolume() {
+      playBeep('start');
+  }
 
-    if (!appData.routines || appData.routines.length === 0) {
-      container.innerHTML = '<p style="color:var(--text-muted);">Aucune routine. Cliquez sur réinitialiser.</p>';
-      return;
+    window.onerror = function(msg, url, line) {
+      const list = document.getElementById('routines-list');
+      if (list) {
+        list.innerHTML = `<div style="background:#7f1d1d; color:white; padding:15px; border-radius:8px; font-family:monospace; margin-top:20px;"><b>CRASH DÉTECTÉ :</b><br>${msg}<br>Ligne: ${line}</div>`;
+      }
+      return false;
+    };
+
+    const DEFAULT_CATALOG = [
+      { id: "pigeon", postureName: "Pigeon Pose", imageName: "pigeon.jpg", durationPerSide: 45, isDouble: true, halfwayBeep: true, prepDelay: 3 },
+      { id: "cobra", postureName: "Cobra Pose", imageName: "cobra.jpg", durationPerSide: 30, isDouble: false, halfwayBeep: false, prepDelay: 0 }
+    ];
+
+    const DEFAULT_ROUTINES = [
+      { id: "routine-court", name: "court", postures: [
+        { id: "pigeon", postureName: "Pigeon Pose", imageName: "pigeon.jpg", durationPerSide: 45, isDouble: true, halfwayBeep: true, prepDelay: 3 },
+        { id: "cobra", postureName: "Cobra Pose", imageName: "cobra.jpg", durationPerSide: 30, isDouble: false, halfwayBeep: false, prepDelay: 0 }
+      ]}
+    ];
+
+    let appData = { globalCatalog: [], routines: [] };
+    let currentWorkflowStep = 1; 
+    let editingRoutineId = null;
+    let wizardRoutineData = { name: '', postures: [] };
+    let activeRoutine = null;
+    let activeStepIdx = 0;
+    let activeSide = 'left'; 
+    let activeTimerState = 1; 
+    let countdownRemaining = 0;
+    let timerIntervalId = null;
+    let countdownTimeoutId = null;
+
+    window.addEventListener('DOMContentLoaded', () => {
+      loadSettingsFromLocalStorage();
+      loadDataFromStorage();
+      renderHomeView();
+    });
+
+    function loadDataFromStorage() {
+      try {
+        const stored = localStorage.getItem('yogaData');
+        if (stored) {
+          let parsed = JSON.parse(stored);
+          if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+            appData.globalCatalog = parsed.globalCatalog || [...DEFAULT_CATALOG];
+            appData.routines = parsed.routines || [...DEFAULT_ROUTINES];
+          } else {
+            resetToSeedData();
+          }
+        } else {
+          resetToSeedData();
+        }
+      } catch(e) {
+        resetToSeedData();
+      }
     }
 
-    appData.routines.forEach(function(r) {
-      var div = document.createElement('div');
-      div.className = 'routine-tile';
-      div.innerHTML = '<div><div class="routine-name">' + r.name + '</div><div class="routine-duration">' + r.postures.length + ' postures</div></div><div><button class="btn-play" onclick="playRoutine(\'' + r.id + '\')">Lancer</button> <button class="btn-danger" onclick="deleteRoutine(\'' + r.id + '\')">X</button></div>';
-      container.appendChild(div);
-    });
-  }
-
-  function startNewRoutine() {
-    currentEdit = { name: '', postures: [] };
-    document.getElementById('editor-name').value = '';
-    renderEditor();
-    showView('view-editor');
-  }
-
-  function renderEditor() {
-    var cat = document.getElementById('editor-catalog');
-    cat.innerHTML = '';
-    DEFAULT_POSTURES.forEach(p => {
-      var item = document.createElement('div');
-      item.className = 'item-row';
-      item.innerHTML = '<span>' + p.name + ' (' + p.duration + 's)</span><button class="btn-play" onclick="addPostureToEdit(\'' + p.id + '\')">+</button>';
-      cat.appendChild(item);
-    });
-
-    var sel = document.getElementById('editor-selected');
-    sel.innerHTML = '';
-    currentEdit.postures.forEach((p, idx) => {
-      var item = document.createElement('div');
-      item.className = 'item-row';
-      item.innerHTML = '<span>' + (idx+1) + '. ' + p.name + '</span><button class="btn-danger" onclick="removePostureFromEdit(' + idx + ')">Enlever</button>';
-      sel.appendChild(item);
-    });
-  }
-
-  function addPostureToEdit(id) {
-    var found = DEFAULT_POSTURES.find(p => p.id === id);
-    if (found) currentEdit.postures.push({...found});
-    renderEditor();
-  }
-
-  function removePostureFromEdit(idx) {
-    currentEdit.postures.splice(idx, 1);
-    renderEditor();
-  }
-
-  function saveRoutine() {
-    var name = document.getElementById('editor-name').value.trim() || 'Ma Routine';
-    if (currentEdit.postures.length === 0) {
-      alert('Ajoutez au moins une posture.');
-      return;
+    function resetToSeedData() {
+      appData.globalCatalog = [...DEFAULT_CATALOG];
+      appData.routines = [...DEFAULT_ROUTINES];
+      commitToStorage();
     }
-    appData.routines.push({ id: 'r_' + Date.now(), name: name, postures: currentEdit.postures });
-    saveData();
-    renderHome();
-  }
 
-  function deleteRoutine(id) {
-    appData.routines = appData.routines.filter(r => r.id !== id);
-    saveData();
-    renderHome();
-  }
+    function commitToStorage() {
+      try {
+        localStorage.setItem('yogaData', JSON.stringify(appData));
+      } catch(e) {
+        console.warn("Storage write blocked");
+      }
+    }
 
-  function playRoutine(id) {
-    var r = appData.routines.find(x => x.id === id);
-    if (!r || r.postures.length === 0) return;
-    activeSession = { routine: r, idx: 0, side: 'Côté Gauche', time: r.postures[0].duration, timer: null, running: false };
-    showView('view-player');
-    updatePlayerUI();
-  }
+    function showView(viewId) {
+      document.querySelectorAll('.app-view').forEach(v => v.classList.add('hidden'));
+      document.getElementById(viewId).classList.remove('hidden');
+    }
 
-  function updatePlayerUI() {
-    var p = activeSession.routine.postures[activeSession.idx];
-    document.getElementById('player-title').innerText = p.name;
-    document.getElementById('player-side').innerText = p.isDouble ? activeSession.side : 'Côté Unique';
-    document.getElementById('player-timer').innerText = activeSession.time;
-  }
+    function renderHomeView() {
+      const container = document.getElementById('routines-list');
+      container.innerHTML = '';
+      if(appData.routines.length === 0) {
+        container.innerHTML = `<p style="color:var(--text-muted); text-align:center; padding:20px;">No routines generated yet.</p>`;
+        return;
+      }
+      appData.routines.forEach(routine => {
+        const totalSecs = routine.postures.reduce((acc, p) => acc + (p.durationPerSide * (p.isDouble ? 2 : 1)), 0);
+        const mins = Math.ceil(totalSecs / 60);
+        const tile = document.createElement('div');
+        tile.className = 'routine-tile';
+        tile.innerHTML = `
+          <div class="routine-info" onclick="startRoutinePlayback('${routine.id}')">
+            <div class="routine-name">${routine.name}</div>
+            <div class="routine-duration">${mins} MINUTES</div>
+          </div>
+          <button class="tile-menu-btn" onclick="toggleTileContextMenu(event, '${routine.id}')">⋮</button>
+          <div class="context-menu hidden" id="menu-${routine.id}">
+            <button onclick="initEditRoutineWorkflow('${routine.id}')">Edit</button>
+            <button onclick="duplicateRoutine('${routine.id}')">Duplicate</button>
+            <button style="color:var(--accent-danger);" onclick="deleteRoutineDirectly('${routine.id}')">Delete</button>
+          </div>
+        `;
+        container.appendChild(tile);
+      });
+    }
 
-  function toggleTimer() {
-    if (activeSession.running) {
-      clearInterval(activeSession.timer);
-      activeSession.running = false;
-      document.getElementById('btn-toggle').innerText = '▶️ Reprendre';
-    } else {
-      activeSession.running = true;
-      document.getElementById('btn-toggle').innerText = '⏸️ Pause';
-      activeSession.timer = setInterval(function() {
-        activeSession.time--;
-        document.getElementById('player-timer').innerText = activeSession.time;
-        if (activeSession.time <= 0) {
-          clearInterval(activeSession.timer);
-          nextStep();
+    function toggleTileContextMenu(event, id) {
+      event.stopPropagation();
+      const targetMenu = document.getElementById(`menu-${id}`);
+      const isHidden = targetMenu.classList.contains('hidden');
+      document.querySelectorAll('.context-menu').forEach(m => m.classList.add('hidden'));
+      if(isHidden) targetMenu.classList.remove('hidden');
+      const closeMenuHandler = () => {
+        targetMenu.classList.add('hidden');
+        document.removeEventListener('click', closeMenuHandler);
+      };
+      document.addEventListener('click', closeMenuHandler);
+    }
+
+    function deleteRoutineDirectly(id) {
+      if(confirm("Are you sure you want to delete this routine?")) {
+        appData.routines = appData.routines.filter(r => r.id !== id);
+        commitToStorage();
+        renderHomeView();
+      }
+    }
+
+    function exportData() {
+      try {
+        const exportPackage = {
+          appData: appData,
+          appSettings: appSettings
+        };
+        const blob = new Blob([JSON.stringify(exportPackage, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'mes_postures.json';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        alert("Exportation réussie ! Fichier 'mes_postures.json' enregistré.");
+      } catch (e) {
+        alert("Erreur lors de l'exportation : " + e.message);
+      }
+    }
+
+    function triggerImportClick() { 
+      document.getElementById('import-file-input').click(); 
+    }
+
+    function importData(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      
+      const reader = new FileReader();
+      reader.onload = function(e) {
+          try {
+              const parsed = JSON.parse(e.target.result);
+              let targetData = null;
+              let targetSettings = null;
+
+              if (parsed && parsed.appData === undefined && (parsed.globalCatalog || parsed.routines)) {
+                  targetData = parsed;
+              } else if (parsed && parsed.appData) {
+                  targetData = parsed.appData;
+                  targetSettings = parsed.appSettings;
+              }
+
+              if (targetData) {
+                  if (targetData.globalCatalog) appData.globalCatalog = targetData.globalCatalog;
+                  if (targetData.routines) appData.routines = targetData.routines;
+                  
+                  if (targetSettings) {
+                      appSettings = targetSettings;
+                      saveSettingsToLocalStorage();
+                  }
+                  
+                  commitToStorage();
+                  renderHomeView();
+                  alert("Importation réussie !");
+              } else {
+                  alert("Format invalide.");
+              }
+          } catch (err) { 
+              alert("Erreur : " + err.message); 
+          }
+          event.target.value = '';
+      };
+      reader.readAsText(file);
+    }
+    
+    function initCreateRoutineWorkflow() {
+      editingRoutineId = null; currentWorkflowStep = 1; wizardRoutineData = { name: '', postures: [] };
+      setupWorkflowUIPanels(); showView('view-routine-manager');
+    }
+
+    function initEditRoutineWorkflow(id) {
+      const routine = appData.routines.find(r => r.id === id);
+      if(!routine) return;
+      editingRoutineId = id; currentWorkflowStep = 1; wizardRoutineData = { name: routine.name, postures: JSON.parse(JSON.stringify(routine.postures)) };
+      setupWorkflowUIPanels(); showView('view-routine-manager');
+    }
+
+    function setupWorkflowUIPanels() {
+      document.querySelectorAll('.workflow-panel').forEach(p => p.classList.add('hidden'));
+      document.getElementById(`panel-step-${currentWorkflowStep}`).classList.remove('hidden');
+      const nextBtn = document.getElementById('btn-workflow-forward');
+      nextBtn.innerText = currentWorkflowStep === 3 ? '[FINISH]' : '[NEXT]';
+      if (currentWorkflowStep === 1) renderStep1Lists();
+      else if (currentWorkflowStep === 2) renderStep2List();
+      else if (currentWorkflowStep === 3) document.getElementById('routine-name-input').value = wizardRoutineData.name;
+    }
+
+    function advanceWorkflowStep() {
+      if (currentWorkflowStep === 1) {
+        if(wizardRoutineData.postures.length === 0) return;
+        currentWorkflowStep = 2; setupWorkflowUIPanels();
+      } else if (currentWorkflowStep === 2) {
+        currentWorkflowStep = 3; setupWorkflowUIPanels();
+      } else if (currentWorkflowStep === 3) {
+        const nameInput = document.getElementById('routine-name-input').value.trim();
+        if(!nameInput) return;
+        wizardRoutineData.name = nameInput;
+        if (editingRoutineId) {
+          const index = appData.routines.findIndex(r => r.id === editingRoutineId);
+          if (index !== -1) appData.routines[index] = { id: editingRoutineId, ...wizardRoutineData };
+        } else {
+          appData.routines.push({ id: 'routine-' + Date.now(), ...wizardRoutineData });
+        }
+        commitToStorage(); cancelRoutineWorkflow();
+      }
+    }
+
+    function cancelRoutineWorkflow() { editingRoutineId = null; currentWorkflowStep = 1; renderHomeView(); showView('view-home'); }
+
+    function renderStep1Lists() {
+      const incContainer = document.getElementById('included-stretches-list'); incContainer.innerHTML = '';
+      wizardRoutineData.postures.forEach((posture, idx) => {
+          const wrapper = document.createElement('div');
+          wrapper.className = 'swipe-row-wrapper';
+          const imgSrc = posture.imageName ? posture.imageName : '';
+          
+          wrapper.innerHTML = `
+            <div class="swipe-row-bg">Remove</div>
+            <div class="swipe-row-fg" data-index="${idx}" style="display: flex; align-items: center; gap: 12px; padding: 10px 16px;">
+              <img src="${imgSrc}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px; background-color: #27272a;" onerror="this.style.visibility='hidden'">
+              <span style="flex-grow: 1;">${posture.postureName}</span>
+              <span>➔</span>
+            </div>
+          `;
+          setupSwipeGesturesOnRow(wrapper.querySelector('.swipe-row-fg'), idx);
+          incContainer.appendChild(wrapper);
+        });
+
+      const availContainer = document.getElementById('available-stretches-list'); availContainer.innerHTML = '';
+      appData.globalCatalog.forEach(posture => {
+        const item = document.createElement('div');
+        item.className = 'available-posture-item';
+        item.style = "display: flex; align-items: center; gap: 12px; padding: 10px 16px; border-bottom: 1px solid #27272a; transition: background 0.2s;";
+        
+        const imgSrc = posture.imageName ? posture.imageName : '';
+        
+        item.innerHTML = `
+          <img src="${imgSrc}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px; background-color: #27272a;" onerror="this.style.visibility='hidden'">
+          <div style="flex-grow: 1;">
+            <span style="font-weight: 500; display: block;">${posture.postureName}</span>
+            <span id="badge-add-${posture.id}" style="font-size: 11px; color: var(--accent-success); font-weight: bold; display: none;">Ajouté !</span>
+          </div>
+          <span style="color:var(--accent-primary); font-weight:bold; font-size: 20px; padding: 4px;">+</span>
+        `;
+        
+        item.onclick = () => { 
+          wizardRoutineData.postures.push(JSON.parse(JSON.stringify(posture))); 
+          item.style.backgroundColor = '#14321a'; 
+          const badge = document.getElementById(`badge-add-${posture.id}`);
+          if (badge) badge.style.display = 'block';
+          
+          setTimeout(() => {
+            renderStep1Lists();
+          }, 400);
+        };
+        availContainer.appendChild(item);
+      });
+    }
+    
+    function setupSwipeGesturesOnRow(rowEl, index) {
+      let touchStartX = 0, currentX = 0;
+      rowEl.addEventListener('touchstart', (e) => { touchStartX = e.touches[0].clientX; rowEl.style.transition = 'none'; }, {passive: true});
+      rowEl.addEventListener('touchmove', (e) => { currentX = e.touches[0].clientX - touchStartX; if (currentX < 0) rowEl.style.transform = `translateX(${currentX}px)`; }, {passive: true});
+      rowEl.addEventListener('touchend', () => {
+        rowEl.style.transition = 'transform 0.2s ease-out';
+        if (currentX < -(window.innerWidth * 0.3)) {
+          rowEl.style.transform = 'translateX(-100%)';
+          setTimeout(() => { wizardRoutineData.postures.splice(index, 1); renderStep1Lists(); }, 200);
+        } else { rowEl.style.transform = 'translateX(0px)'; }
+        currentX = 0;
+      }, {passive: true});
+    }
+
+    function toggleDatabaseSubscreen(show) {
+      document.getElementById('panel-database-subscreen').classList.toggle('hidden', !show);
+      document.getElementById('panel-step-1').classList.toggle('hidden', show);
+      document.getElementById('manager-nav-bar').classList.toggle('hidden', show);
+      if (show) renderDatabaseCatalog(); else renderStep1Lists();
+    }
+
+    function renderDatabaseCatalog() {
+      const container = document.getElementById('database-catalog-list'); container.innerHTML = '';
+      appData.globalCatalog.forEach(posture => {
+        const row = document.createElement('div');
+        row.className = 'db-posture-row';
+        row.id = `db-row-${posture.id}`;
+        row.innerHTML = `<span>${posture.postureName}</span><button class="btn-del" onclick="showInlineConfirm('${posture.id}')">[DEL]</button>`;
+        container.appendChild(row);
+      });
+    }
+
+    function showInlineConfirm(id) {
+      const row = document.getElementById(`db-row-${id}`);
+      if(!row) return;
+      row.style.backgroundColor = '#401010';
+      row.innerHTML = `
+        <span style="color: #ff9999; font-weight: bold; font-size:14px;">Delete this posture?</span>
+        <div style="display:flex; gap:8px;">
+          <button onclick="executeCatalogPurge('${id}')" style="background: var(--accent-danger); color: white; border: none; padding: 6px 12px; border-radius: 4px; font-weight:bold;">Y</button>
+          <button onclick="renderDatabaseCatalog()" style="background: #555; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-weight:bold;">N</button>
+        </div>
+      `;
+    }
+
+    function executeCatalogPurge(id) {
+      appData.globalCatalog = appData.globalCatalog.filter(p => p.id !== id);
+      appData.routines.forEach(r => r.postures = r.postures.filter(p => p.id !== id));
+      commitToStorage(); renderDatabaseCatalog();
+    }
+
+    function goToBuilderFromDb() { showView('view-builder'); }
+    function closeBuilderView() { showView('view-routine-manager'); toggleDatabaseSubscreen(true); }
+
+    function savePostureToCatalog() {
+      const name = document.getElementById('posture-name').value.trim();
+      const img = document.getElementById('posture-image').value.trim();
+      const duration = parseInt(document.getElementById('posture-duration').value);
+      if (!name || !img) return;
+      appData.globalCatalog.push({
+        id: 'posture-' + Date.now(), postureName: name, imageName: img,
+        durationPerSide: isNaN(duration) ? 45 : duration,
+        isDouble: document.getElementById('posture-double').checked,
+        halfwayBeep: false, 
+        prepDelay: parseInt(document.getElementById('posture-prep').value) || 0
+      });
+      commitToStorage(); document.getElementById('posture-name').value = ''; document.getElementById('posture-image').value = '';
+      closeBuilderView();
+    }
+
+    function triggerLocalFileSelector() {
+      document.getElementById('hidden-posture-file-input').click();
+    }
+
+    function handleLocalFileSelection(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const fullFileName = file.name;
+      document.getElementById('posture-image').value = fullFileName;
+
+      const fileNameWithoutExtension = fullFileName.substring(0, fullFileName.lastIndexOf('.')) || fullFileName;
+      document.getElementById('posture-name').value = fileNameWithoutExtension;
+  
+      event.target.value = '';
+    }
+
+    function renderStep2List() {
+      const container = document.getElementById('config-lengths-list'); container.innerHTML = '';
+      wizardRoutineData.postures.forEach((posture, idx) => {
+        const row = document.createElement('div'); row.className = 'config-row'; row.setAttribute('draggable', 'true'); row.setAttribute('data-index', idx);
+        const isChecked = posture.halfwayBeep ? 'checked' : '';
+        const doubleBadge = posture.isDouble ? '<span class="badge-double">x2</span>' : '';
+        const imgSrc = posture.imageName ? posture.imageName : '';
+
+        row.innerHTML = `
+          <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 12px;">
+            <div class="config-left" style="display: flex; align-items: center; gap: 12px;">
+              <div class="drag-handle">⋮⋮</div>
+              <img src="${imgSrc}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px; background-color: #27272a;" onerror="this.style.visibility='hidden'">
+              <div>${posture.postureName} ${doubleBadge}</div>
+            </div>
+            <div class="timer-controls">
+              <button class="btn-time-step" onclick="adjustLocalTime(${idx}, -5)">-</button>
+              <div class="local-duration-display">${posture.durationPerSide}s</div>
+              <button class="btn-time-step" onclick="adjustLocalTime(${idx}, 5)">+</button>
+            </div>
+          </div>
+          <div style="display: flex; align-items: center; font-size: 13px; color: var(--text-muted);">
+            <label style="display: flex; align-items: center; cursor: pointer;">
+              <input type="checkbox" onchange="updateStepHalfwayBeep(${idx}, this.checked)" ${isChecked} style="margin-right: 8px; width: 16px; height: 16px; margin-bottom: 0;">
+              Halfway Beep for this routine
+            </label>
+          </div>`;
+        setupDragEvents(row); container.appendChild(row);
+      });
+    }
+
+    function updateStepHalfwayBeep(idx, isChecked) {
+      wizardRoutineData.postures[idx].halfwayBeep = isChecked;
+    }
+
+    function adjustLocalTime(idx, amt) {
+      wizardRoutineData.postures[idx].durationPerSide = Math.max(5, wizardRoutineData.postures[idx].durationPerSide + amt);
+      renderStep2List();
+    }
+
+    let dragSrcEl = null;
+    function setupDragEvents(el) {
+      el.addEventListener('dragstart', (e) => { dragSrcEl = el; e.dataTransfer.effectAllowed = 'move'; el.style.opacity = '0.4'; });
+      el.addEventListener('dragover', (e) => { if (e.preventDefault) e.preventDefault(); return false; });
+      el.addEventListener('drop', (e) => {
+        e.stopPropagation();
+        if (dragSrcEl !== el) {
+          const sIdx = parseInt(dragSrcEl.getAttribute('data-index')), tIdx = parseInt(el.getAttribute('data-index'));
+          const tmp = wizardRoutineData.postures[sIdx]; wizardRoutineData.postures.splice(sIdx, 1); wizardRoutineData.postures.splice(tIdx, 0, tmp);
+          renderStep2List();
+        }
+        return false;
+      });
+      el.addEventListener('dragend', () => el.style.opacity = '1');
+    }
+
+    /* --- VUE D: AUDIO PLAYBACK ENGINE --- */
+    function startRoutinePlayback(routineId) {
+      activeRoutine = appData.routines.find(r => r.id === routineId);
+      if(!activeRoutine) return;
+      
+      requestWakeLock();
+      activeStepIdx = 0; activeSide = 'left'; showView('view-player'); executeGlobalInitialCountdown();
+    }
+
+    function clearActiveAsynchronousMemoryInstances() {
+      if (timerIntervalId) { clearInterval(timerIntervalId); timerIntervalId = null; }
+      if (countdownTimeoutId) { clearTimeout(countdownTimeoutId); countdownTimeoutId = null; }
+      if (window.speechSynthesis) window.speechSynthesis.cancel();
+    }
+
+    function executeGlobalInitialCountdown() {
+      clearActiveAsynchronousMemoryInstances(); activeTimerState = 3;
+      document.getElementById('player-posture-title').innerText = "Get Ready!";
+      document.getElementById('player-side-indicator').innerText = "";
+      document.getElementById('player-status-text').innerText = "Starting Routine...";
+      let startCount = 3; document.getElementById('player-timer-digits').innerText = startCount;
+      
+      playBeep('tick');
+
+      timerIntervalId = setInterval(() => {
+        startCount--;
+        if (startCount > 0) { document.getElementById('player-timer-digits').innerText = startCount; playBeep('tick'); }
+        else if (startCount === 0) { document.getElementById('player-timer-digits').innerText = "Go!"; playBeep('start'); }
+        else { clearInterval(timerIntervalId); timerIntervalId = null; loadActivePostureIndexSequence(); }
+      }, 1000);
+    }
+
+    function loadActivePostureIndexSequence() {
+      clearActiveAsynchronousMemoryInstances();
+      if (activeStepIdx >= activeRoutine.postures.length) { alert("Routine finished!"); exitPlaybackSession(); return; }
+      const p = activeRoutine.postures[activeStepIdx]; countdownRemaining = p.durationPerSide;
+      document.getElementById('player-progress').innerText = `${activeStepIdx + 1} of ${activeRoutine.postures.length}`;
+      document.getElementById('player-posture-title').innerText = p.postureName;
+      document.getElementById('player-side-indicator').innerText = p.isDouble ? `${activeSide} Side` : "Single Side";
+      document.getElementById('player-up-next').innerText = (activeStepIdx + 1 < activeRoutine.postures.length) ? activeRoutine.postures[activeStepIdx + 1].postureName : "Done!";
+      
+      const imageBox = document.getElementById('player-image-display');
+      if (p.imageName && p.imageName.trim() !== "") {
+        imageBox.innerHTML = `<img src="${p.imageName}" alt="${p.postureName}">`;
+      } else {
+        imageBox.innerHTML = `<div style="color:var(--text-muted); font-size:14px;">No Image</div>`;
+      }
+
+      activeTimerState = 1;
+      document.getElementById('player-status-text').innerText = "Awaiting Vocal Command (Say START or GO)";
+      document.getElementById('player-timer-digits').innerText = countdownRemaining;
+      document.getElementById('btn-player-toggle').innerText = "▶️";
+      
+      if (activeSide === 'left') {
+        executeTextToSpeechVocalNotification(p.postureName, () => {
+          startMicListening();
+        });
+      } else {
+        startMicListening();
+      }
+    }  
+
+    function transitionToActiveTimerState2() {
+      // 1. On ferme le micro instantanément
+      stopMicListening();
+      clearActiveAsynchronousMemoryInstances(); 
+      activeTimerState = 2;
+
+      document.getElementById('player-status-text').innerText = "Timer Running";
+      document.getElementById('btn-player-toggle').innerText = "⏸️";
+
+      // Récupération des données de la posture
+      let nextNotificationDispatched = false;
+      const currentPosture = activeRoutine.postures[activeStepIdx];
+      const originalSideDuration = currentPosture.durationPerSide;
+      
+      // On force l'affichage des chiffres de départ (ex: 30)
+      document.getElementById('player-timer-digits').innerText = countdownRemaining;
+
+      // LE BIP DE DÉPART EXACTEMENT AU TEMPS ZÉRO !
+      playBeep('start');
+
+      // 2. LE CHRONO COMMENCE
+      timerIntervalId = setInterval(() => {
+        countdownRemaining--; 
+        document.getElementById('player-timer-digits').innerText = countdownRemaining;
+        
+        if (currentPosture.halfwayBeep && countdownRemaining === Math.floor(originalSideDuration / 2)) { 
+          playBeep('halfway');
+        }
+
+        // --- CORRECTION DU "DONE!" ---
+        if (countdownRemaining === 10 && !nextNotificationDispatched) {
+          nextNotificationDispatched = true;
+          // À 10 secondes, on annonce la suite SAUF si c'est la toute fin.
+          if (currentPosture.isDouble && activeSide === 'left') {
+             executeTextToSpeechVocalNotification("Switch side coming up");
+          } else if (activeStepIdx + 1 < activeRoutine.postures.length) {
+             executeTextToSpeechVocalNotification("Up next: " + activeRoutine.postures[activeStepIdx + 1].postureName);
+          }
+        }
+
+        if (countdownRemaining <= 3 && countdownRemaining > 0) { 
+          playBeep('tick');
+        }
+
+        if (countdownRemaining <= 0) { 
+          clearInterval(timerIntervalId); 
+          timerIntervalId = null; 
+          playBeep('end');
+
+          // Vérifie si on est à la toute fin de la routine
+          const isLastPosture = (activeStepIdx + 1 === activeRoutine.postures.length);
+          const isLastSide = (!currentPosture.isDouble || activeSide === 'right');
+
+          if (isLastPosture && isLastSide) {
+             executeTextToSpeechVocalNotification("Done!", () => {
+                 evaluatePostStepNavigationPaths(); 
+             });
+          } else {
+             evaluatePostStepNavigationPaths();
+          }
         }
       }, 1000);
     }
-  }
 
-  function nextStep() {
-    var p = activeSession.routine.postures[activeSession.idx];
-    if (p.isDouble && activeSession.side === 'Côté Gauche') {
-      activeSession.side = 'Côté Droit';
-      activeSession.time = p.duration;
-      updatePlayerUI();
-      toggleTimer();
-    } else {
-      activeSession.idx++;
-      if (activeSession.idx < activeSession.routine.postures.length) {
-        var nextP = activeSession.routine.postures[activeSession.idx];
-        activeSession.side = 'Côté Gauche';
-        activeSession.time = nextP.duration;
-        updatePlayerUI();
-        toggleTimer();
-      } else {
-        alert('Routine terminée ! Bravo !');
-        stopPlayer();
+    function startManualTriggerSequenceWithPrepDelay() {
+      clearActiveAsynchronousMemoryInstances(); activeTimerState = 3;
+      stopMicListening();
+      let totalPrep = 3 + (activeRoutine.postures[activeStepIdx].prepDelay || 0);
+      document.getElementById('player-status-text').innerText = `Preparing (${totalPrep}s)`;
+      document.getElementById('player-timer-digits').innerText = totalPrep;
+      document.getElementById('btn-player-toggle').innerText = "⏳";
+      timerIntervalId = setInterval(() => {
+        totalPrep--;
+        if(totalPrep > 0) { document.getElementById('player-timer-digits').innerText = totalPrep; document.getElementById('player-status-text').innerText = `Preparing (${totalPrep}s)`; }
+        else { clearInterval(timerIntervalId); timerIntervalId = null; transitionToActiveTimerState2(); }
+      }, 1000);
+    }
+
+    function evaluatePostStepNavigationPaths() {
+      const p = activeRoutine.postures[activeStepIdx];
+      if (p.isDouble && activeSide === 'left') { 
+          activeSide = 'right'; 
+          executeTextToSpeechVocalNotification("Switch side", () => {
+             countdownTimeoutId = setTimeout(() => { loadActivePostureIndexSequence(); }, 300); 
+          }); 
+      } else { 
+          activeSide = 'left'; 
+          activeStepIdx++; 
+          countdownTimeoutId = setTimeout(() => { loadActivePostureIndexSequence(); }, 600); 
       }
     }
-  }
 
-  function stopPlayer() {
-    if (activeSession.timer) clearInterval(activeSession.timer);
-    activeSession.running = false;
-    renderHome();
-  }
+    /* --- SYSTÈME DE CAPTURE VOCALE LOCALE --- */
+    let micStreamInstance = null;
+    let localAnalyser = null;
+    let fallbackAudioCtx = null; // Utilisé UNIQUEMENT pour analyser le micro (volume)
 
-  // Chargement au démarrage
-  window.onload = loadData;
-</script>
+    async function startMicListening() {
+      if (activeTimerState !== 1) return;
+      if (micStreamInstance) return; 
+
+      try {
+        micStreamInstance = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+        
+        if (!fallbackAudioCtx) {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            fallbackAudioCtx = new AudioContext();
+        }
+        if (fallbackAudioCtx.state === 'suspended') fallbackAudioCtx.resume();
+        
+        const source = fallbackAudioCtx.createMediaStreamSource(micStreamInstance);
+        localAnalyser = fallbackAudioCtx.createAnalyser();
+        localAnalyser.fftSize = 256;
+        source.connect(localAnalyser);
+        
+        const bufferLength = localAnalyser.frequencyBinCount;
+        const dataArray = new Uint8Array(bufferLength);
+        
+        const checkAudioLocale = () => {
+          if (activeTimerState !== 1 || !micStreamInstance) {
+            stopMicListening();
+            return;
+          }
+          
+          localAnalyser.getByteFrequencyData(dataArray);
+          
+          let volumeTotal = 0;
+          for (let i = 0; i < bufferLength; i++) {
+            volumeTotal += dataArray[i];
+          }
+          let volumeMoyen = volumeTotal / bufferLength;
+
+          if (volumeMoyen > appSettings.micThreshold) { 
+            stopMicListening();
+            transitionToActiveTimerState2();
+            return;
+          }
+          
+          requestAnimationFrame(checkAudioLocale);
+        };
+        
+        requestAnimationFrame(checkAudioLocale);
+        
+      } catch (e) {
+        console.warn("Impossible d'activer le micro local :", e);
+      }
+    }
+
+    function stopMicListening() {
+      if (micStreamInstance) {
+        micStreamInstance.getTracks().forEach(track => track.stop());
+        micStreamInstance = null;
+      }
+    }
+
+    function executeTextToSpeechVocalNotification(textString, callback) {
+      try { 
+        if (window.speechSynthesis) { 
+          const u = new SpeechSynthesisUtterance(textString); 
+          u.lang = 'en-US'; 
+          u.volume = 1.0; 
+          
+          if (callback) {
+            u.onend = () => {
+              setTimeout(callback, 100);
+            };
+            u.onerror = () => {
+              setTimeout(callback, 100);
+            };
+          }
+          
+          window.speechSynthesis.speak(u); 
+        } else if (callback) {
+          callback();
+        }
+      } catch(e){
+        if (callback) callback();
+      }
+    }
+
+    function playerActionToggle() {
+      if (activeTimerState === 1) startManualTriggerSequenceWithPrepDelay();
+      else if (activeTimerState === 2) { 
+        clearActiveAsynchronousMemoryInstances(); 
+        activeTimerState = 1; 
+        document.getElementById('player-status-text').innerText = "Paused - Awaiting Trigger (Say START or GO)"; 
+        document.getElementById('btn-player-toggle').innerText = "▶️"; 
+        startMicListening(); 
+      }
+    }
+
+    function playerActionNext() {
+      clearActiveAsynchronousMemoryInstances();
+      if (activeRoutine.postures[activeStepIdx].isDouble && activeSide === 'left') { activeSide = 'right'; } else { activeSide = 'left'; activeStepIdx++; }
+      loadActivePostureIndexSequence();
+    }
+
+    function playerActionBack() {
+      clearActiveAsynchronousMemoryInstances();
+      if (activeSide === 'right') { activeSide = 'left'; }
+      else if (activeStepIdx > 0) { activeStepIdx--; activeSide = activeRoutine.postures[activeStepIdx].isDouble ? 'right' : 'left'; }
+      loadActivePostureIndexSequence();
+    }
+
+    function exitPlaybackSession() { 
+      clearActiveAsynchronousMemoryInstances(); 
+      activeRoutine = null; 
+      stopMicListening();
+      releaseWakeLock();
+      renderHomeView(); 
+      showView('view-home'); 
+    }
+
+    function duplicateRoutine(routineId) {
+      const originalRoutine = appData.routines.find(r => r.id === routineId);
+      if (!originalRoutine) return;
+    
+      const copiedRoutine = JSON.parse(JSON.stringify(originalRoutine));
+      copiedRoutine.id = 'routine-' + Date.now();
+      copiedRoutine.name = originalRoutine.name + " (Copie)";
+    
+      appData.routines.push(copiedRoutine);
+      commitToStorage();
+      
+      if (typeof renderHomeView === 'function') {
+        renderHomeView();
+      }
+    } 
+    </script>
 </body>
 </html>
