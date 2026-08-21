@@ -472,7 +472,7 @@
         <input type="file" id="import-file-input" class="hidden" accept=".json" onchange="importData(event)">
       </div>
 
-      <div class="app-version">v8.3</div>
+      <div class="app-version">v8.4</div>
     </section>
 
     <section id="page-global-settings" class="app-view hidden">
@@ -1184,83 +1184,110 @@
     }  
 
 function transitionToActiveTimerState2() {
-  // 1. Ton "Pshhht" a été capté, on ferme le micro proprement
+  // 1. On coupe le micro
   stopMicListening();
   clearActiveAsynchronousMemoryInstances(); 
   activeTimerState = 2;
 
-  document.getElementById('player-status-text').innerText = "Get Ready...";
+  document.getElementById('player-status-text').innerText = "Timer Running";
   document.getElementById('btn-player-toggle').innerText = "⏸️";
 
   const currentPosture = activeRoutine.postures[activeStepIdx];
   const originalSideDuration = currentPosture.durationPerSide;
   
-  // 2. On lance un mini décompte de 3 secondes visuel et sonore (les ticks passent à 100%)
-  let prepTickCount = 3;
-  document.getElementById('player-timer-digits').innerText = prepTickCount;
-  playBeep('tick');
+  countdownRemaining = originalSideDuration;
+  document.getElementById('player-timer-digits').innerText = countdownRemaining;
 
+  // 2. On laisse juste 100 millisecondes au système pour nettoyer le micro, 
+  // puis on balance un bip synthétique propre (style oscillateur pur) qui ne peut pas bugger.
+  setTimeout(() => {
+    playCleanSyntheticBeep(); // Fonction de bip pur intégré
+  }, 100);
+
+  let nextNotificationDispatched = false;
+
+  // 3. Le chrono roule
   timerIntervalId = setInterval(() => {
-    prepTickCount--;
+    countdownRemaining--; 
+    document.getElementById('player-timer-digits').innerText = countdownRemaining;
+    
+    if (currentPosture.halfwayBeep && countdownRemaining === Math.floor(originalSideDuration / 2)) { 
+      playCleanSyntheticBeep();
+    }
 
-    if (prepTickCount > 0) {
-      // Le matériel audio est maintenant 100% stable, les ticks s'enchaînent parfaitement
-      document.getElementById('player-timer-digits').innerText = prepTickCount;
-      playBeep('tick');
-    } else {
-      // 3. Fin du décompte de prep : Le vrai chrono de la posture commence !
-      clearInterval(timerIntervalId);
-      timerIntervalId = null;
+    if (countdownRemaining === 10 && !nextNotificationDispatched) {
+      nextNotificationDispatched = true;
+      if (currentPosture.isDouble && activeSide === 'left') {
+         executeTextToSpeechVocalNotification("Switch side coming up");
+      } else if (activeStepIdx + 1 < activeRoutine.postures.length) {
+         executeTextToSpeechVocalNotification("Up next: " + activeRoutine.postures[activeStepIdx + 1].postureName);
+      }
+    }
 
-      document.getElementById('player-status-text').innerText = "Timer Running";
-      countdownRemaining = originalSideDuration;
-      document.getElementById('player-timer-digits').innerText = countdownRemaining;
-      
-      // Ici, le canal média est grand ouvert depuis 3 secondes, le bip de départ va sonner net
-      playBeep('start');
-      let nextNotificationDispatched = false;
+    if (countdownRemaining <= 3 && countdownRemaining > 0) { 
+      playCleanSyntheticBeep();
+    }
 
-      // La boucle de la posture roule
-      timerIntervalId = setInterval(() => {
-        countdownRemaining--; 
-        document.getElementById('player-timer-digits').innerText = countdownRemaining;
-        
-        if (currentPosture.halfwayBeep && countdownRemaining === Math.floor(originalSideDuration / 2)) { 
-          playBeep('halfway');
-        }
+    if (countdownRemaining <= 0) { 
+      clearInterval(timerIntervalId); 
+      timerIntervalId = null; 
+      playCleanSyntheticBeepHigh(); // Double bip de fin
 
-        if (countdownRemaining === 10 && !nextNotificationDispatched) {
-          nextNotificationDispatched = true;
-          if (currentPosture.isDouble && activeSide === 'left') {
-             executeTextToSpeechVocalNotification("Switch side coming up");
-          } else if (activeStepIdx + 1 < activeRoutine.postures.length) {
-             executeTextToSpeechVocalNotification("Up next: " + activeRoutine.postures[activeStepIdx + 1].postureName);
-          }
-        }
+      const isLastPosture = (activeStepIdx + 1 === activeRoutine.postures.length);
+      const isLastSide = (!currentPosture.isDouble || activeSide === 'right');
 
-        if (countdownRemaining <= 3 && countdownRemaining > 0) { 
-          playBeep('tick');
-        }
-
-        if (countdownRemaining <= 0) { 
-          clearInterval(timerIntervalId); 
-          timerIntervalId = null; 
-          playBeep('end');
-
-            const isLastPosture = (activeStepIdx + 1 === activeRoutine.postures.length);
-            const isLastSide = (!currentPosture.isDouble || activeSide === 'right');
-
-            if (isLastPosture && isLastSide) {
-               executeTextToSpeechVocalNotification("Done!", () => {
-                   evaluatePostStepNavigationPaths(); 
-               });
-            } else {
-               evaluatePostStepNavigationPaths();
-            }
-        }
-      }, 1000);
+      if (isLastPosture && isLastSide) {
+         executeTextToSpeechVocalNotification("Done!", () => {
+             evaluatePostStepNavigationPaths(); 
+         });
+      } else {
+         evaluatePostStepNavigationPaths();
+      }
     }
   }, 1000);
+}
+
+// Générateur de bip pur (zéro fichier MP3, zéro latence, 100% stable)
+function playCleanSyntheticBeep() {
+    try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        const ctx = new AudioCtx();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(800, ctx.currentTime); // Fréquence claire
+        
+        gain.gain.setValueAtTime((appSettings.beepVolume / 100) * 0.3, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.15);
+        
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        
+        osc.start();
+        osc.stop(ctx.currentTime + 0.15);
+    } catch(e) {}
+}
+
+function playCleanSyntheticBeepHigh() {
+    try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        const ctx = new AudioCtx();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(1200, ctx.currentTime); // Plus aigu pour la fin
+        
+        gain.gain.setValueAtTime((appSettings.beepVolume / 100) * 0.4, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.3);
+        
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        
+        osc.start();
+        osc.stop(ctx.currentTime + 0.3);
+    } catch(e) {}
 }
 
     function startManualTriggerSequenceWithPrepDelay() {
