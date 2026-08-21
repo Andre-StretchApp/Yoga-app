@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>StretchApp</title>
   <style>
-    /* --- DESIGN SYSTEM & SYSTEM CONSTRAINTS (Dark Theme Strict) --- */
     :root {
       --bg-main: #121214;
       --bg-card: #1e1e22;
@@ -470,7 +469,7 @@
         <input type="file" id="import-file-input" class="hidden" accept=".json" onchange="importData(event)">
       </div>
 
-      <div class="app-version">v7.5 (Data Persistence & Recovery Fix)</div>
+      <div class="app-version">v7.6 (Audio Start Fix)</div>
     </section>
 
     <section id="page-global-settings" class="app-view hidden">
@@ -1305,6 +1304,7 @@
 
           if (volumeMoyen > appSettings.micThreshold) { 
             stopMicListening();
+            unlockAudioContext();
             transitionToActiveTimerState2();
             return;
           }
