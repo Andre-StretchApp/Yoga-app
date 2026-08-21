@@ -472,7 +472,7 @@
         <input type="file" id="import-file-input" class="hidden" accept=".json" onchange="importData(event)">
       </div>
 
-      <div class="app-version">v8.1</div>
+      <div class="app-version">v8.2</div>
     </section>
 
     <section id="page-global-settings" class="app-view hidden">
@@ -1184,70 +1184,68 @@
     }  
 
 function transitionToActiveTimerState2() {
-  // 1. On ferme le micro instantanément
-  stopMicListening();
+  // 1. On n'arrête PLUS le micro tout de suite ! 
+  // On arrête seulement la boucle qui écoute ta voix pour ne pas relancer la fonction.
   clearActiveAsynchronousMemoryInstances(); 
   activeTimerState = 2;
 
   document.getElementById('player-status-text').innerText = "Timer Running";
   document.getElementById('btn-player-toggle').innerText = "⏸️";
 
-  // Récupération des données de la posture
-  let nextNotificationDispatched = false;
   const currentPosture = activeRoutine.postures[activeStepIdx];
   const originalSideDuration = currentPosture.durationPerSide;
   
-  // On force l'affichage des chiffres de départ (ex: 30) au moment du déclenchement vocal
   document.getElementById('player-timer-digits').innerText = countdownRemaining;
 
-  // --- LE CORRECTIF EST ICI ---
-  // On laisse 600 millisecondes au téléphone pour faire le "switch" 
-  // matériel entre le mode "Micro" et le mode "Média" avant de lancer le son.
+  // 2. Le son joue IMMÉDIATEMENT. 
+  // Puisque le micro est encore actif, le système n'a pas besoin de changer de canal audio.
+  playBeep('start');
+
+  // 3. On demande au système de fermer le micro 1.5 seconde PLUS TARD, 
+  // en arrière-plan, quand le son "beep_start" est déjà complètement terminé.
   setTimeout(() => {
+      stopMicListening();
+  }, 1500);
+
+  // 4. Le chrono visuel commence exactement au même moment que le son
+  timerIntervalId = setInterval(() => {
+    countdownRemaining--; 
+    document.getElementById('player-timer-digits').innerText = countdownRemaining;
     
-    // Le canal audio est maintenant stable, on joue le son
-    playBeep('start');
+    if (currentPosture.halfwayBeep && countdownRemaining === Math.floor(originalSideDuration / 2)) { 
+      playBeep('halfway');
+    }
 
-    // Le chrono de la minuterie commence ici
-    timerIntervalId = setInterval(() => {
-      countdownRemaining--; 
-      document.getElementById('player-timer-digits').innerText = countdownRemaining;
-      
-      if (currentPosture.halfwayBeep && countdownRemaining === Math.floor(originalSideDuration / 2)) { 
-        playBeep('halfway');
+    if (countdownRemaining === 10 && !nextNotificationDispatched) {
+      nextNotificationDispatched = true;
+      if (currentPosture.isDouble && activeSide === 'left') {
+         executeTextToSpeechVocalNotification("Switch side coming up");
+      } else if (activeStepIdx + 1 < activeRoutine.postures.length) {
+         executeTextToSpeechVocalNotification("Up next: " + activeRoutine.postures[activeStepIdx + 1].postureName);
       }
+    }
 
-      if (countdownRemaining === 10 && !nextNotificationDispatched) {
-        nextNotificationDispatched = true;
-        if (currentPosture.isDouble && activeSide === 'left') {
-           executeTextToSpeechVocalNotification("Switch side coming up");
-        } else if (activeStepIdx + 1 < activeRoutine.postures.length) {
-           executeTextToSpeechVocalNotification("Up next: " + activeRoutine.postures[activeStepIdx + 1].postureName);
-        }
+    if (countdownRemaining <= 3 && countdownRemaining > 0) { 
+      playBeep('tick');
+    }
+
+    if (countdownRemaining <= 0) { 
+      clearInterval(timerIntervalId); 
+      timerIntervalId = null; 
+      playBeep('end');
+
+      const isLastPosture = (activeStepIdx + 1 === activeRoutine.postures.length);
+      const isLastSide = (!currentPosture.isDouble || activeSide === 'right');
+
+      if (isLastPosture && isLastSide) {
+         executeTextToSpeechVocalNotification("Done!", () => {
+             evaluatePostStepNavigationPaths(); 
+         });
+      } else {
+         evaluatePostStepNavigationPaths();
       }
-
-      if (countdownRemaining <= 3 && countdownRemaining > 0) { 
-        playBeep('tick');
-      }
-
-      if (countdownRemaining <= 0) { 
-        clearInterval(timerIntervalId); 
-        timerIntervalId = null; 
-        playBeep('end');
-
-        const isLastPosture = (activeStepIdx + 1 === activeRoutine.postures.length);
-        const isLastSide = (!currentPosture.isDouble || activeSide === 'right');
-
-        if (isLastPosture && isLastSide) {
-           executeTextToSpeechVocalNotification("Done!", () => {
-               evaluatePostStepNavigationPaths(); 
-           });
-        } else {
-           evaluatePostStepNavigationPaths();
-        }
-      }
-    }, 1000);
-  }, 600); // 600ms de délai de stabilisation matérielle
+    }
+  }, 1000);
 }
 
     function startManualTriggerSequenceWithPrepDelay() {
