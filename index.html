@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>StretchApp v8.0</title>
+  <title>StretchApp v8.1</title>
   <style>
     :root {
       --bg-main: #121214;
@@ -11,25 +11,18 @@
       --text-main: #ffffff;
       --text-muted: #a1a1aa;
       --accent-danger: #7f1d1d;
-      --accent-success: #16a34a;
       --accent-primary: #3b82f6;
     }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      -webkit-tap-highlight-color: transparent;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
     body {
       background-color: var(--bg-main);
       color: var(--text-main);
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       min-height: 100vh;
       display: flex;
       justify-content: center;
-      overflow-x: hidden;
     }
 
     .app-container {
@@ -38,30 +31,23 @@
       min-height: 100vh;
       display: flex;
       flex-direction: column;
-      position: relative;
-      background-color: var(--bg-main);
       padding: 16px;
       padding-bottom: 90px;
+      position: relative;
     }
 
-    .hidden {
-      display: none !important;
-    }
+    .hidden { display: none !important; }
 
-    h1, h2, h3 {
-      font-weight: 700;
-      margin-bottom: 16px;
-    }
+    h1, h2 { font-weight: 700; margin-bottom: 16px; }
 
     button {
       cursor: pointer;
       border: none;
       border-radius: 8px;
       font-weight: 600;
-      transition: background 0.2s ease;
     }
 
-    input, select, textarea {
+    input {
       background-color: var(--bg-card);
       border: 1px solid #3f3f46;
       color: var(--text-main);
@@ -72,13 +58,12 @@
       margin-bottom: 16px;
     }
 
-    .btn-create-routine {
+    .btn-create {
       background-color: var(--text-main);
       color: var(--bg-main);
       padding: 14px;
       width: 100%;
       font-size: 16px;
-      text-align: center;
       margin-bottom: 24px;
     }
 
@@ -90,60 +75,29 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      position: relative;
     }
 
-    .routine-info {
-      flex-grow: 1;
-      cursor: pointer;
-    }
+    .routine-name { font-size: 18px; font-weight: 600; text-transform: capitalize; }
+    .routine-duration { font-size: 12px; color: var(--text-muted); margin-top: 4px; font-weight: 700; }
 
-    .routine-name {
-      font-size: 18px;
-      font-weight: 600;
-      text-transform: capitalize;
-    }
-
-    .routine-duration {
-      font-size: 12px;
-      color: var(--text-muted);
-      margin-top: 4px;
-      font-weight: 700;
-    }
-
-    .tile-menu-btn {
-      background: transparent;
-      color: var(--text-main);
-      font-size: 24px;
-      padding: 4px 12px;
-    }
-
-    .context-menu {
-      position: absolute;
-      top: 45px;
-      right: 16px;
-      background-color: #27272a;
-      border-radius: 6px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-      z-index: 10;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .context-menu button {
-      background: transparent;
-      color: var(--text-main);
-      padding: 12px 24px;
-      text-align: left;
+    .btn-play {
+      background-color: var(--accent-primary);
+      color: white;
+      padding: 8px 16px;
       font-size: 14px;
     }
 
+    .btn-danger {
+      background-color: var(--accent-danger);
+      color: white;
+      padding: 8px 12px;
+      font-size: 12px;
+    }
+
     .backup-zone {
-      margin-top: auto;
+      margin-top: 20px;
       display: flex;
       gap: 8px;
-      padding-top: 20px;
-      flex-wrap: wrap;
     }
 
     .btn-backup {
@@ -152,213 +106,260 @@
       font-size: 12px;
       padding: 8px;
       flex: 1;
-      min-width: 30%;
-    }
-
-    .step-indicator {
-      font-size: 14px;
-      color: var(--text-muted);
-      margin-bottom: 8px;
-      font-weight: 600;
     }
 
     .list-container {
       background-color: var(--bg-card);
       border-radius: 10px;
-      min-height: 120px;
       margin-bottom: 20px;
-      overflow: hidden;
+      padding: 8px;
     }
 
-    .swipe-row-wrapper {
-      position: relative;
-      overflow: hidden;
-      background-color: var(--accent-danger);
-      border-bottom: 1px solid #27272a;
-    }
-
-    .swipe-row-bg {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: flex-end;
-      padding-right: 20px;
-      color: white;
-      font-weight: 700;
-      font-size: 14px;
-    }
-
-    .swipe-row-fg {
-      background-color: var(--bg-card);
-      padding: 14px 16px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      transition: transform 0.2s ease-out;
-      position: relative;
-      z-index: 2;
-    }
-
-    .btn-db-trigger {
-      background-color: #27272a;
-      color: var(--text-main);
+    .item-row {
       padding: 12px;
-      width: 100%;
-      margin-bottom: 20px;
-    }
-
-    .available-posture-item, .db-posture-row {
-      padding: 14px 16px;
       border-bottom: 1px solid #27272a;
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
 
-    .btn-del {
-      background-color: var(--accent-danger);
-      color: white;
-      padding: 6px 12px;
-      font-size: 12px;
-    }
-
-    .config-row {
-      padding: 12px 16px;
-      border-bottom: 1px solid #27272a;
-      display: flex;
-      flex-direction: column;
-      align-items: stretch;
-    }
-
-    .timer-controls {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .btn-time-step {
-      background-color: #27272a;
-      color: white;
-      width: 32px;
-      height: 32px;
-      font-size: 18px;
-    }
-
-    .local-duration-display {
-      font-variant-numeric: tabular-nums;
-      font-weight: 600;
-      min-width: 40px;
-      text-align: center;
-    }
-
-    .workflow-nav-bar {
-      position: absolute;
+    .workflow-nav {
+      position: fixed;
       bottom: 0;
       left: 0;
       width: 100%;
-      height: 76px;
-      background-color: var(--bg-main);
-      padding: 12px 16px;
+      background: var(--bg-main);
+      padding: 12px;
+      display: flex;
+      gap: 8px;
       border-top: 1px solid #27272a;
-      display: flex;
-      gap: 12px;
-      z-index: 100;
-    }
-
-    .btn-wf-next {
-      background-color: var(--accent-primary);
-      color: white;
-      flex: 1;
-      font-size: 16px;
-    }
-
-    .btn-wf-cancel {
-      background-color: #27272a;
-      color: var(--text-main);
-      padding: 0 20px;
-    }
-
-    .player-header {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      position: relative;
-      margin-bottom: 20px;
-    }
-
-    .progress-text {
-      font-size: 14px;
-      font-weight: 700;
-      color: var(--text-muted);
-    }
-
-    .up-next-vignette {
-      position: absolute;
-      top: 0;
-      right: 0;
-      background-color: var(--bg-card);
-      padding: 6px 10px;
-      border-radius: 6px;
-      font-size: 11px;
-      max-width: 120px;
-      text-align: right;
-    }
-
-    .up-next-label {
-      color: var(--text-muted);
-      font-weight: 700;
-      font-size: 9px;
-    }
-
-    .up-next-name {
-      font-weight: 600;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
     }
 
     .player-body {
-      flex: 1;
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
       text-align: center;
-      padding: 20px 0;
+      margin-top: 40px;
     }
 
-    .active-posture-title {
-      font-size: 28px;
-      font-weight: 800;
-      margin-bottom: 4px;
+    .countdown { font-size: 72px; font-weight: 800; margin: 20px 0; }
+  </style>
+</head>
+<body>
+
+<div class="app-container">
+
+  <section id="view-home">
+    <h1>Routines</h1>
+    <button class="btn-create" onclick="startNewRoutine()">+ Créer une routine</button>
+    <div id="routines-list"></div>
+    <div class="backup-zone">
+      <button class="btn-backup" onclick="resetDefaults()">🔄 Réinitialiser les routines</button>
+    </div>
+  </section>
+
+  <section id="view-editor" class="hidden">
+    <h2>Créer / Modifier Routine</h2>
+    <input type="text" id="editor-name" placeholder="Nom de la routine (ex: Matin)">
+    <h3>Postures disponibles</h3>
+    <div id="editor-catalog" class="list-container"></div>
+    <h3>Postures ajoutées</h3>
+    <div id="editor-selected" class="list-container"></div>
+    <div class="workflow-nav">
+      <button class="btn-backup" onclick="showView('view-home')">Annuler</button>
+      <button class="btn-play" style="flex:1;" onclick="saveRoutine()">Sauvegarder</button>
+    </div>
+  </section>
+
+  <section id="view-player" class="hidden">
+    <button class="btn-danger" onclick="stopPlayer()">Quitter</button>
+    <div class="player-body">
+      <h2 id="player-title">Posture</h2>
+      <div id="player-side" style="color:var(--accent-primary); font-weight:bold;"></div>
+      <div class="countdown" id="player-timer">00</div>
+      <button class="btn-create" id="btn-toggle" onclick="toggleTimer()">▶️ Démarrer / Pause</button>
+    </div>
+  </section>
+
+</div>
+
+<script>
+  var DEFAULT_POSTURES = [
+    { id: 'p1', name: 'Pigeon Pose', duration: 45, isDouble: true },
+    { id: 'p2', name: 'Cobra Pose', duration: 30, isDouble: false }
+  ];
+
+  var DEFAULT_ROUTINE = {
+    id: 'r1',
+    name: 'Routine Rapide',
+    postures: [...DEFAULT_POSTURES]
+  };
+
+  var appData = { routines: [DEFAULT_ROUTINE] };
+  var currentEdit = { name: '', postures: [] };
+  var activeSession = { routine: null, idx: 0, side: 'gauche', time: 0, timer: null, running: false };
+
+  function loadData() {
+    try {
+      var saved = localStorage.getItem('stretch_data_v8');
+      if (saved) appData = JSON.parse(saved);
+    } catch(e) {}
+    renderHome();
+  }
+
+  function saveData() {
+    localStorage.setItem('stretch_data_v8', JSON.stringify(appData));
+  }
+
+  function resetDefaults() {
+    appData = { routines: [JSON.parse(JSON.stringify(DEFAULT_ROUTINE))] };
+    saveData();
+    renderHome();
+  }
+
+  function showView(id) {
+    document.querySelectorAll('section').forEach(s => s.classList.add('hidden'));
+    document.getElementById(id).classList.remove('hidden');
+  }
+
+  function renderHome() {
+    showView('view-home');
+    var container = document.getElementById('routines-list');
+    container.innerHTML = '';
+
+    if (!appData.routines || appData.routines.length === 0) {
+      container.innerHTML = '<p style="color:var(--text-muted);">Aucune routine. Cliquez sur réinitialiser.</p>';
+      return;
     }
 
-    .active-side-indicator {
-      font-size: 16px;
-      color: var(--accent-primary);
-      font-weight: 700;
-      margin-bottom: 16px;
-    }
+    appData.routines.forEach(function(r) {
+      var div = document.createElement('div');
+      div.className = 'routine-tile';
+      div.innerHTML = '<div><div class="routine-name">' + r.name + '</div><div class="routine-duration">' + r.postures.length + ' postures</div></div><div><button class="btn-play" onclick="playRoutine(\'' + r.id + '\')">Lancer</button> <button class="btn-danger" onclick="deleteRoutine(\'' + r.id + '\')">X</button></div>';
+      container.appendChild(div);
+    });
+  }
 
-    .image-placeholder {
-      width: 85vw;
-      height: 85vw;
-      max-width: 320px;
-      max-height: 320px;
-      background-color: var(--bg-card);
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-bottom: 24px;
-      overflow: hidden;
-      border: 1px solid #27272a;
-      aspect-ratio: 1 / 1;
-    }
+  function startNewRoutine() {
+    currentEdit = { name: '', postures: [] };
+    document.getElementById('editor-name').value = '';
+    renderEditor();
+    showView('view-editor');
+  }
 
-    .image-placeholder img {
-      width: 10
+  function renderEditor() {
+    var cat = document.getElementById('editor-catalog');
+    cat.innerHTML = '';
+    DEFAULT_POSTURES.forEach(p => {
+      var item = document.createElement('div');
+      item.className = 'item-row';
+      item.innerHTML = '<span>' + p.name + ' (' + p.duration + 's)</span><button class="btn-play" onclick="addPostureToEdit(\'' + p.id + '\')">+</button>';
+      cat.appendChild(item);
+    });
+
+    var sel = document.getElementById('editor-selected');
+    sel.innerHTML = '';
+    currentEdit.postures.forEach((p, idx) => {
+      var item = document.createElement('div');
+      item.className = 'item-row';
+      item.innerHTML = '<span>' + (idx+1) + '. ' + p.name + '</span><button class="btn-danger" onclick="removePostureFromEdit(' + idx + ')">Enlever</button>';
+      sel.appendChild(item);
+    });
+  }
+
+  function addPostureToEdit(id) {
+    var found = DEFAULT_POSTURES.find(p => p.id === id);
+    if (found) currentEdit.postures.push({...found});
+    renderEditor();
+  }
+
+  function removePostureFromEdit(idx) {
+    currentEdit.postures.splice(idx, 1);
+    renderEditor();
+  }
+
+  function saveRoutine() {
+    var name = document.getElementById('editor-name').value.trim() || 'Ma Routine';
+    if (currentEdit.postures.length === 0) {
+      alert('Ajoutez au moins une posture.');
+      return;
+    }
+    appData.routines.push({ id: 'r_' + Date.now(), name: name, postures: currentEdit.postures });
+    saveData();
+    renderHome();
+  }
+
+  function deleteRoutine(id) {
+    appData.routines = appData.routines.filter(r => r.id !== id);
+    saveData();
+    renderHome();
+  }
+
+  function playRoutine(id) {
+    var r = appData.routines.find(x => x.id === id);
+    if (!r || r.postures.length === 0) return;
+    activeSession = { routine: r, idx: 0, side: 'Côté Gauche', time: r.postures[0].duration, timer: null, running: false };
+    showView('view-player');
+    updatePlayerUI();
+  }
+
+  function updatePlayerUI() {
+    var p = activeSession.routine.postures[activeSession.idx];
+    document.getElementById('player-title').innerText = p.name;
+    document.getElementById('player-side').innerText = p.isDouble ? activeSession.side : 'Côté Unique';
+    document.getElementById('player-timer').innerText = activeSession.time;
+  }
+
+  function toggleTimer() {
+    if (activeSession.running) {
+      clearInterval(activeSession.timer);
+      activeSession.running = false;
+      document.getElementById('btn-toggle').innerText = '▶️ Reprendre';
+    } else {
+      activeSession.running = true;
+      document.getElementById('btn-toggle').innerText = '⏸️ Pause';
+      activeSession.timer = setInterval(function() {
+        activeSession.time--;
+        document.getElementById('player-timer').innerText = activeSession.time;
+        if (activeSession.time <= 0) {
+          clearInterval(activeSession.timer);
+          nextStep();
+        }
+      }, 1000);
+    }
+  }
+
+  function nextStep() {
+    var p = activeSession.routine.postures[activeSession.idx];
+    if (p.isDouble && activeSession.side === 'Côté Gauche') {
+      activeSession.side = 'Côté Droit';
+      activeSession.time = p.duration;
+      updatePlayerUI();
+      toggleTimer();
+    } else {
+      activeSession.idx++;
+      if (activeSession.idx < activeSession.routine.postures.length) {
+        var nextP = activeSession.routine.postures[activeSession.idx];
+        activeSession.side = 'Côté Gauche';
+        activeSession.time = nextP.duration;
+        updatePlayerUI();
+        toggleTimer();
+      } else {
+        alert('Routine terminée ! Bravo !');
+        stopPlayer();
+      }
+    }
+  }
+
+  function stopPlayer() {
+    if (activeSession.timer) clearInterval(activeSession.timer);
+    activeSession.running = false;
+    renderHome();
+  }
+
+  // Chargement au démarrage
+  window.onload = loadData;
+</script>
+</body>
+</html>
